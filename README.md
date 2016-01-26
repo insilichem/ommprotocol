@@ -7,9 +7,36 @@ By Jaime Rodríguez-Guerra ([@jaimergp](https://github.com/jaimergp))
 
 Contributors: Lur Alonso, Patricia Saura
 
+Installation
+------------
+Really easy with Conda. If you don't know what Conda is, check [its webpage](http://conda.pydata.org/docs/). Quick steps:
+
+1. Download and install Miniconda.
+
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+        bash Miniconda3*.sh
+
+2. Restart terminal and add `omnia` and `insilichem` to the channels list.
+
+        conda config --add channels omnia
+        conda config --add channels insilichem
+
+3. Install ommprotocol in an environment called `openmm`:
+
+        conda create -n openmm ommprotocol
+
+4. Activate the environment
+
+        source activate ommprotocol
+
+5. Test
+
+        ommprotocol -h
+
+
 Usage
 -----
-Run this for usage help:
+Quick help:
 
     ommprotocol -h
 
