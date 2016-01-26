@@ -1,0 +1,15 @@
+# Simple protocol (minimization + 25ns production)
+system:
+    nonbondedMethod: PME
+    nonbondedCutoff: 1.0 # nm
+    constraints: None
+    rigidWater: False
+    ewaldErrorTolerance: 0.0005
+
+stages:
+    -   name: production
+        temperature: 300 # K
+        minimize: True
+        md_steps: 25000000
+        trajectory: DCD
+        trajectory_step: 2000

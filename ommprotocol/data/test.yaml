@@ -1,0 +1,15 @@
+# Standard protocol
+forcefield: [-1]
+system:
+    nonbondedMethod: PME
+    nonbondedCutoff: 1
+    constraints: HBonds
+    rigidWater: False
+
+stages:
+    -   name: test
+        temperature: 300
+        minimize: True
+        md_steps: 100000
+        trajectory: DCD
+        trajectory_step: 1000

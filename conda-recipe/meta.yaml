@@ -1,0 +1,28 @@
+package:
+  name: ommprotocol
+  version: "0.0.1"
+
+about:
+  home: https://github.com/insilichem/ommprotocol
+  license: LGPL
+  summary: Easy to deploy MD protocols for OpenMM
+
+source:
+  path: ../
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - openmm
+    - pyyaml
+    - parmed
+    - openmoltools
+    - mdtraj
+
+test:
+  imports:
+    - ommprotocol

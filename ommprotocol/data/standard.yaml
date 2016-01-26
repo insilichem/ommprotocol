@@ -1,0 +1,67 @@
+# Standard protocol
+system:
+    nonbondedMethod: PME
+    nonbondedCutoff: 1.0 # nm
+    constraints: None
+    rigidWater: False
+    ewaldErrorTolerance: 0.0005
+
+stages:
+    -   name: eq1_protein
+        temperature: 300
+        constrained_atoms: protein
+        minimize: True
+        md_steps: 100000
+        trajectory: DCD
+        trajectory_step: 1000
+
+    -   name: eq1_backbone
+        temperature: 300
+        constrained_atoms: backbone
+        minimize: True
+        md_steps: 0
+
+    -   name: eq1_released
+        temperature: 300
+        minimize: True
+        md_steps: 0
+
+    -   name: eq2_preannealing
+        temperature: 100
+        barostat: None
+        constrained_atoms: backbone
+        minimize: False
+        md_steps: 100000
+        trajectory: DCD
+        trajectory_step: 1000
+
+    -   name: eq3_annealing_100K
+        temperature: 100
+        constrained_atoms: backbone
+        minimize: False
+        md_steps: 100000
+        trajectory: DCD
+        trajectory_step: 1000
+
+    -   name: eq3_annealing_200K
+        temperature: 200
+        constrained_atoms: backbone
+        minimize: False
+        md_steps: 100000
+        trajectory: DCD
+        trajectory_step: 1000
+
+    -   name: eq3_annealing_300K
+        temperature: 300
+        constrained_atoms: backbone
+        minimize: False
+        md_steps: 100000
+        trajectory: DCD
+        trajectory_step: 1000
+
+    -   name: production
+        temperature: 300
+        minimize: False
+        md_steps: 25000000
+        trajectory: DCD
+        trajectory_step: 2000

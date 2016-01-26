@@ -1,0 +1,15 @@
+# Standard protocol
+forcefields:
+    -   amber99sbildn.xml
+    -   amber99_obc.xml
+system:
+    constraints: None
+    rigidWater: False
+
+stages:
+    -   name: implicit
+        temperature: 300 # K
+        minimize: True
+        md_steps: 250000000
+        trajectory: DCD
+        trajectory_step: 2000
