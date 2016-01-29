@@ -366,7 +366,7 @@ def args_parse(argv=None):
                 except:  # maybe pdb?
                     pdb = app.PDBFile(args.coordinates)
                     positions = pdb.positions
-                    box_vectors = pdb.toppology.getPeriodicBoxVectors()
+                    box_vectors = pdb.topology.getPeriodicBoxVectors()
         # Read initial velocities
         if args.velocities:
             vel = NamdBinVel.read(args.velocities)
@@ -384,9 +384,8 @@ def args_parse(argv=None):
             velocities = getattr(loaded_input, 'velocities', None)
     elif args.input.endswith('.psf'):
         loaded_input = app.CharmmPsfFile(args.input)
-        if not args.charmm_sources or positions is None:
-            sys.exit('ERROR: PSF files require parameters files with option '
-                     '--charmm-sources and coordinates (with -c or -r).')
+        if positions is None:
+            sys.exit('ERROR: PSF files require coordinates (with -c).')
 
         if box_vectors is not None:
             loaded_input.setBox(box_vectors)
