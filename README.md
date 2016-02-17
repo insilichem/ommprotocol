@@ -40,17 +40,17 @@ Quick help:
 
     ommprotocol -h
 
-Input file (`-i`) can be:
+Input file (last argument, no flags) can be:
 
- - Amber's prmtop (topology and forcefields) and an accompanying inpcrd (coordinates)
  - Standard PDB (topology and coordinates). Protocol MUST include 
    [OpenMM forcefields](https://github.com/pandegroup/openmm/tree/master/wrappers/python/simtk/openmm/app/data) to use.
+ - Amber's PRMTOP (topology and forcefields).
  - Charmm PSF with accompanying topology. Protocol MUST include parameters files in `charmm_parameters`.
 
 
 Additional inputs:
 
- - Amber's inpcrd or Namd's coor for input coordinates (`-c`).
+ - Amber's inpcrd or Namd's coor for input coordinates (`-c`). Required for PRMTOP and PSF.
  - Namd's vel for velocities (`-v`).
  - Charmm .restart (used by this script) to restore positions and velocities (`-r`).
  - Protocol file (`-p`). This file can specify forcefields, Charmm parameters, and finally,

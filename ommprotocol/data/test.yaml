@@ -1,5 +1,4 @@
-# Standard protocol
-forcefield: [-1]
+# Test protocol
 system:
     nonbondedMethod: PME
     nonbondedCutoff: 1

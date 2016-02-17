@@ -4,7 +4,7 @@
 from setuptools import setup
 import os
 
-VERSION = "0.0.1"
+VERSION = "0.0.3"
 
 
 def read(fname):
@@ -14,7 +14,7 @@ setup(
     name='ommprotocol',
     version=VERSION,
     url='https://github.com/insilichem/ommprotocol',
-    download_url='https://github.com/insilichem/ommprotocol/tarball/' + VERSION,
+    download_url='https://github.com/insilichem/ommprotocol/tarball/v' + VERSION,
     license='LGPL',
     author="Jaime Rodríguez-Guerra",
     author_email='jaime.rogue@gmail.com',

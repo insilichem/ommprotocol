@@ -17,6 +17,7 @@ insiliChem.bio OpenMM launcher for a standard MD workflow.
 # Python imports
 from __future__ import division, print_function
 from argparse import ArgumentParser
+from collections import namedtuple
 from datetime import datetime
 import os
 import random
@@ -91,7 +92,7 @@ INTEGRATORS = {
 #=========================================================================
 
 
-def stage(input_top, positions=None, forcefields=None, velocities=None,
+def stage(input_top, positions=None, forcefields=None, velocities=None, box_vectors=None,
           md_steps=0, minimize=True, barostat=True, temperature=300,
           restrained_atoms=None, constrained_atoms=None, timestep=1.0,
           trajectory=None, trajectory_step=10000, stdout_step=1000, restart_step=1000000,
@@ -117,6 +118,8 @@ def stage(input_top, positions=None, forcefields=None, velocities=None,
     velocities : simtk.unit.Quantity, optional
         The initial velocities of this stage. If None, they will be set
         to the requested temperature
+    box_vectors : simtk.unit.Quantity, optional
+        Replacement periodic box vectors, instead of input_top's.
     barostat : bool, optional
         True for NPT @ 1 atmosphere. False for NVT
     restrained_atoms, constrained_atoms : str or None, optional
@@ -232,6 +235,9 @@ def stage(input_top, positions=None, forcefields=None, velocities=None,
     else:
         simulation.context.setVelocitiesToTemperature(temperature*unit.kelvin)
 
+    if box_vectors is not None:
+        simulation.context.setPeriodicBoxVectors(*box_vectors)
+
     if minimize:
         if verbose:
             print('  Minimizing...')
@@ -257,20 +263,34 @@ def stage(input_top, positions=None, forcefields=None, velocities=None,
             print('  Running MD with {} steps'.format(md_steps))
         try:
             simulation.step(md_steps)
-        except KeyboardInterrupt:
-            report = input('\nCtr+C detected. Save current status? (y/N): ')
-            if report in ('Y', 'y', 'yes', 'YES'):
-                print('\nReporting...')
+        except (Exception, KeyboardInterrupt) as ex:
+            if isinstance(ex, KeyboardInterrupt):
+                report = input('\nCtr+C detected. Save current status? (y/N): ')
+                if report not in ('Y', 'y', 'yes', 'YES'):
+                    sys.exit('Ok, bye!')
+            try:
+                print('-'*70)
+                print('Interruption detected. Attempting emergency report...', end=' ')
+                state_xml = '{}_{}.state.xml'.format(project_name, name)
+                simulation.saveState(new_filename_from(os.path.join(output, state_xml)))
+                state = simulation.context.getState(getPositions=True, getVelocities=True,
+                                                    getForces=True, getEnergy=True,
+                                                    getParameters=True)
                 for reporter in simulation.reporters:
-                    state = simulation.context.getState(getPositions=True, getVelocities=True,
-                                                        getForces=True, getEnergy=True,
-                                                        getParameters=True)
-                    reporter.report(simulation, state)
-            sys.exit('Done. Bye!')
+                    if not isinstance(reporter, app.StateDataReporter):
+                        reporter.report(simulation, state)
+            except Exception:
+                print('FAILED!')
+            else:
+                print('SUCCESS!')
+            finally:
+                print('-'*70)
+                raise ex
 
     state = simulation.context.getState(getPositions=True, getVelocities=True)
-
-    return state.getPositions(), state.getVelocities()
+    state_xml = '{}_{}.state.xml'.format(project_name, name)
+    simulation.saveState(new_filename_from(os.path.join(output, state_xml)))
+    return state.getPositions(), state.getVelocities(), state.getPeriodicBoxVectors()
 
 
 def run_protocol(argv=None):
@@ -319,10 +339,11 @@ def run_protocol(argv=None):
                        'output': output,
                        '_system_kwargs': system_options}
 
+    vec = None
     for stage_options in protocol['stages']:
         options = default_options.copy()
         options.update(stage_options)
-        pos, vel = stage(loaded_input, positions=pos, velocities=vel, **options)
+        pos, vel, vec = stage(loaded_input, positions=pos, velocities=vel, box_vectors=vec, **options)
 
     print('Done in', datetime.now()-start_time)
 
@@ -336,6 +357,8 @@ def args_parse(argv=None):
                         help='Initial coordinates (.inpcrd, .coor, .pdb), required for PRMTOP/PSF files')
     parser.add_argument('-v', '--velocities', type=str,
                         help='Initial velocities (.vel)')
+    parser.add_argument('-b', '--box_vectors', type=str,
+                        help='Box vectors in .xsc format (for namd restarts)')
     parser.add_argument('-r', '--restart', type=str,
                         help='Restart file of a previous run with this topology '
                         '(ignores velocities and positions)')
@@ -362,15 +385,21 @@ def args_parse(argv=None):
                 try:
                     namdbincoor = NamdBinCoor.read(args.coordinates)
                     positions_array = namdbincoor.coordinates[0]
-                    positions = unit.Quantity(positions_array, unit=unit.angstrom)
+                    positions = unit.Quantity(positions_array, unit=unit.angstroms)
                 except:  # maybe pdb?
                     pdb = app.PDBFile(args.coordinates)
                     positions = pdb.positions
-                    box_vectors = pdb.topology.getPeriodicBoxVectors()
+                    box_vectors = pdb.topology.getUnitCellDimensions()
         # Read initial velocities
         if args.velocities:
             vel = NamdBinVel.read(args.velocities)
-            velocities = vel.velocities[0] * vel.SCALE_FACTOR * unit.angstrom/unit.picosecond
+            velocities_array = vel.velocities[0] / vel.SCALE_FACTOR
+            velocities = unit.Quantity(velocities_array, unit=unit.angstroms/unit.picosecond)
+
+        if args.box_vectors and args.box_vectors.endswith('.xsc'):
+            xsc = parse_xsc(args.box_vectors)
+            box_vectors = unit.Quantity([xsc.a_x, xsc.b_y, xsc.c_z],
+                                        unit=unit.angstroms).in_units_of(unit.nanometers)
 
     # Topology is a PRMTOP file
     if args.input.endswith('.top') or args.input.endswith('.prmtop'):
@@ -386,13 +415,12 @@ def args_parse(argv=None):
         loaded_input = app.CharmmPsfFile(args.input)
         if positions is None:
             sys.exit('ERROR: PSF files require coordinates (with -c).')
-
-        if box_vectors is not None:
-            loaded_input.setBox(box_vectors)
-        else:
+        if box_vectors is None:
             box_vectors = tuple(max((pos[i] for pos in positions))
                                 - min((pos[i] for pos in positions)) for i in range(3))
-            loaded_input.setBox(*[v._value for v in box_vectors])
+        loaded_input.setBox(*[v._value for v in box_vectors])
+    else:
+        sys.exit("ERROR: Input file {} not recognized".format(args.input))
 
     if not args.protocol:
         args.protocol = "standard.yaml"
@@ -401,7 +429,6 @@ def args_parse(argv=None):
     except IOError:  # protocol not found in working dir, try builtin
         fname = args.protocol + '.yaml' if not args.protocol.endswith('.yaml') else args.protocol
         builtin_protocols = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-        print(builtin_protocols)
         try:
             yamlfile = open(os.path.join(builtin_protocols, fname))
         except IOError:
@@ -462,6 +489,13 @@ def apply_constraint(topology, system, subset=None):
     for i, atom in enumerate(topology.atoms()):
         if subset(atom):
             system.setParticleMass(i, 0*unit.dalton)
+
+
+def parse_xsc(path):
+    with open(path) as f:
+        lines = f.readlines()
+        NamedXsc = namedtuple("NamedXsc", lines[1].split()[1:])
+        return NamedXsc(*map(float, lines[2].split()))
 
 
 def new_filename_from(path):
