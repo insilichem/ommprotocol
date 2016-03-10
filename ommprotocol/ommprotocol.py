@@ -309,7 +309,7 @@ def run_protocol(argv=None):
     """
     start_time = datetime.now()
 
-    loaded_input, pos, vel, filename, out, protocol = args_parse(argv)
+    loaded_input, pos, vel, filename, out, box, protocol = args_parse(argv)
     basedir, name_with_ext = os.path.split(filename)
     output = out if out else basedir
     try:
@@ -323,8 +323,8 @@ def run_protocol(argv=None):
         try:
             loaded_input.parmset = app.CharmmParameterSet(*protocol['charmm_parameters'])
         except KeyError:
-            sys.exit("ERROR: For PSF input files you must specify CHARMM parameters in "
-                     "protocol with key 'charmm_parameters'")
+            sys.exit('ERROR: For PSF input files you must specify CHARMM parameters in '
+                     'protocol with key "charmm_parameters"')
         else:
             loaded_input.loadParameters(loaded_input.parmset)
 
@@ -339,11 +339,11 @@ def run_protocol(argv=None):
                        'output': output,
                        '_system_kwargs': system_options}
 
-    vec = None
     for stage_options in protocol['stages']:
         options = default_options.copy()
         options.update(stage_options)
-        pos, vel, vec = stage(loaded_input, positions=pos, velocities=vel, box_vectors=vec, **options)
+        pos, vel, box = stage(
+            loaded_input, positions=pos, velocities=vel, box_vectors=box, **options)
 
     print('Done in', datetime.now()-start_time)
 
@@ -351,7 +351,7 @@ def run_protocol(argv=None):
 def args_parse(argv=None):
     parser = ArgumentParser(
         description='insiliChem.bio OpenMM launcher: easy to deploy MD protocols for OpenMM')
-    parser.add_argument('input', metavar="INPUT FILE", type=str,
+    parser.add_argument('input', metavar='INPUT FILE', type=str,
                         help='Topology file, in PDB, PSF, or PRMTOP format')
     parser.add_argument('-c', '--coordinates', type=str,
                         help='Initial coordinates (.inpcrd, .coor, .pdb), required for PRMTOP/PSF files')
@@ -371,10 +371,21 @@ def args_parse(argv=None):
     positions, velocities, box_vectors = None, None, None
     # Read restart file
     if args.restart:
-        print('INFO: Loading positions and velocities from restart')
-        rst = parmed_load_file(args.restart)
-        positions = rst.coordinates[0] * unit.angstrom
-        velocities = rst.velocities[0] * unit.angstrom/unit.picosecond
+        print('INFO: Loading positions, vectors and velocities from restart file')
+        if args.restart.endswith('.xml'):
+            with open(args.restart) as f:
+                xml = mm.XmlSerializer.deserialize(f.read())
+                positions = xml.getPositions()
+                velocities = xml.getVelocities()
+                box_vectors = xml.getPeriodicBoxVectors()
+        else:
+            rst = parmed_load_file(args.restart)
+            positions = unit.Quantity(rst.coordinates[0], unit=unit.angstrom)
+            if rst.hasvels:
+                velocities = unit.Quantity(rst.velocities[0], unit=unit.angstrom/unit.picosecond)
+            if rst.hasbox:
+                box_vectors = [[v if i == j else 0 for j in range(3)]
+                               for i, v in enumerate(rst.cell_lengths)] * unit.angstrom
     # no restart file, try with separate positions and velocities files
     else:
         # Read initial coordinates
@@ -398,7 +409,7 @@ def args_parse(argv=None):
 
         if args.box_vectors and args.box_vectors.endswith('.xsc'):
             xsc = parse_xsc(args.box_vectors)
-            box_vectors = unit.Quantity([xsc.a_x, xsc.b_y, xsc.c_z],
+            box_vectors = unit.Quantity([[xsc.a_x, 0, 0], [0, xsc.b_y, 0], [0, 0, xsc.c_z]],
                                         unit=unit.angstroms).in_units_of(unit.nanometers)
 
     # Topology is a PRMTOP file
@@ -416,14 +427,17 @@ def args_parse(argv=None):
         if positions is None:
             sys.exit('ERROR: PSF files require coordinates (with -c).')
         if box_vectors is None:
-            box_vectors = tuple(max((pos[i] for pos in positions))
-                                - min((pos[i] for pos in positions)) for i in range(3))
-        loaded_input.setBox(*[v._value for v in box_vectors])
+            print('    Info: Attempting automatic calculation of box vectors...')
+            x, y, z = tuple(max((pos[i] for pos in positions))
+                            - min((pos[i] for pos in positions)) for i in range(3))
+            box_vectors = unit.Quantity([[x, 0, 0], [0, y, 0], [0, 0, z]],
+                                        unit=unit.nanometers)
+        loaded_input.setBox(*[v[i]._value for i, v in enumerate(box_vectors)])
     else:
-        sys.exit("ERROR: Input file {} not recognized".format(args.input))
+        sys.exit('ERROR: Input file {} not recognized'.format(args.input))
 
     if not args.protocol:
-        args.protocol = "standard.yaml"
+        args.protocol = 'standard.yaml'
     try:
         yamlfile = open(args.protocol)
     except IOError:  # protocol not found in working dir, try builtin
@@ -439,7 +453,7 @@ def args_parse(argv=None):
     protocol = yaml.load(yamlfile)
     yamlfile.close()
 
-    return loaded_input, positions, velocities, args.input, args.output, protocol
+    return loaded_input, positions, velocities, args.input, args.output, box_vectors, protocol
 
 
 #=========================================================================
@@ -494,7 +508,7 @@ def apply_constraint(topology, system, subset=None):
 def parse_xsc(path):
     with open(path) as f:
         lines = f.readlines()
-        NamedXsc = namedtuple("NamedXsc", lines[1].split()[1:])
+        NamedXsc = namedtuple('NamedXsc', lines[1].split()[1:])
         return NamedXsc(*map(float, lines[2].split()))
 
 
@@ -502,7 +516,7 @@ def new_filename_from(path):
     name, ext = os.path.splitext(path)
     i = 1
     while os.path.exists(path):
-        path = "{}.{}{}".format(name, i, ext)
+        path = '{}.{}{}'.format(name, i, ext)
         i += 1
     return path
 
