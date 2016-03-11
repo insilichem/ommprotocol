@@ -73,7 +73,7 @@ REPORTERS = {
 }
 SELECTORS = {
     'protein': lambda a: a.residue.name not in ('WAT', 'HOH') and a.name not in ('Cl-', 'Na+'),
-    'protein_no_H': lambda a: a.residue.name not in ('WAT', 'HOH') and a.name not in ('Cl-', 'Na+') and a.element.symbol != 'H',
+    'protein_no_H': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA') and a.element.symbol != 'H',
     'backbone': lambda a: a.name in ('CA', 'C', 'N')
 }
 INTEGRATORS = {
@@ -287,7 +287,8 @@ def stage(input_top, positions=None, forcefields=None, velocities=None, box_vect
                 print('-'*70)
                 raise ex
 
-    state = simulation.context.getState(getPositions=True, getVelocities=True)
+    state = simulation.context.getState(getPositions=True, getVelocities=True,
+                                        enforcePeriodicBox=system.usesPeriodicBoundaryConditions())
     state_xml = '{}_{}.state.xml'.format(project_name, name)
     simulation.saveState(new_filename_from(os.path.join(output, state_xml)))
     return state.getPositions(), state.getVelocities(), state.getPeriodicBoxVectors()
@@ -404,7 +405,7 @@ def args_parse(argv=None):
         # Read initial velocities
         if args.velocities:
             vel = NamdBinVel.read(args.velocities)
-            velocities_array = vel.velocities[0] / vel.SCALE_FACTOR
+            velocities_array = vel.velocities[0]
             velocities = unit.Quantity(velocities_array, unit=unit.angstroms/unit.picosecond)
 
         if args.box_vectors and args.box_vectors.endswith('.xsc'):
@@ -427,7 +428,7 @@ def args_parse(argv=None):
         if positions is None:
             sys.exit('ERROR: PSF files require coordinates (with -c).')
         if box_vectors is None:
-            print('    Info: Attempting automatic calculation of box vectors...')
+            print('  Info: Attempting automatic calculation of box vectors...')
             x, y, z = tuple(max((pos[i] for pos in positions))
                             - min((pos[i] for pos in positions)) for i in range(3))
             box_vectors = unit.Quantity([[x, 0, 0], [0, y, 0], [0, 0, z]],
@@ -502,7 +503,7 @@ def apply_constraint(topology, system, subset=None):
         subset = lambda x: True
     for i, atom in enumerate(topology.atoms()):
         if subset(atom):
-            system.setParticleMass(i, 0*unit.dalton)
+            system.setParticleMass(i, 0)
 
 
 def parse_xsc(path):
