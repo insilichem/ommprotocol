@@ -166,7 +166,7 @@ def stage(input_top, positions=None, forcefields=None, velocities=None, box_vect
 
     Returns
     -------
-    positions, velocities
+    positions, velocities, box_vectors
     """
     # Defaults checking
     if kwargs:
@@ -216,6 +216,10 @@ def stage(input_top, positions=None, forcefields=None, velocities=None, box_vect
         apply_constraint(input_top.topology, system, subset=SELECTORS[constrained_atoms])
 
     if barostat:
+        if not system.usesPeriodicBoundaryConditions():
+            print('Warning! You appear to be using non-periodic boundary conditions, '
+                  'and a barostat, which do not get along well. Barostat is only useful '
+                  'with PBC!')
         system.addForce(mm.MonteCarloBarostat(_pressure*unit.bar, temperature*unit.kelvin, 25))
 
     platform_kwargs = {}

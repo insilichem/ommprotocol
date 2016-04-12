@@ -13,3 +13,4 @@ stages:
         md_steps: 250000000
         trajectory: DCD
         trajectory_step: 2000
+        barostat: False
