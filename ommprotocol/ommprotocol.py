@@ -235,15 +235,16 @@ def stage(input_top, positions=None, forcefields=None, velocities=None, box_vect
                                             _friction/unit.picoseconds,
                                             timestep*unit.femtoseconds)
     simulation = app.Simulation(input_top.topology, system, _integrator, **platform_kwargs)
+
+    if box_vectors is not None:
+        simulation.context.setPeriodicBoxVectors(*box_vectors)
+
     simulation.context.setPositions(positions)
 
     if velocities is not None:
         simulation.context.setVelocities(velocities)
     else:
         simulation.context.setVelocitiesToTemperature(temperature*unit.kelvin)
-
-    if box_vectors is not None:
-        simulation.context.setPeriodicBoxVectors(*box_vectors)
 
     if minimize:
         if verbose:
