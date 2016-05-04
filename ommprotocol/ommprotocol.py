@@ -342,6 +342,8 @@ def run_protocol(argv=None):
     system_options['nonbondedMethod'] = NONBONDEDMETHODS.get(system_options.get('nonbondedMethod'))
     system_options['nonbondedCutoff'] = system_options.get('nonbondedCutoff', 1.0)*unit.nanometers
     system_options['constraints'] = CONSTRAINTS.get(system_options.get('nonbondedMethod'))
+    system_options['rigidWater'] = system_options.get('rigidWater', True)
+    system_options['removeCMMotion'] = system_options.get('removeCMMotion', True)
     # Prepare the options dict
     default_options = {'forcefields': protocol.get('forcefields'),
                        'project_name': project_name,
@@ -517,8 +519,8 @@ def apply_constraint(topology, system, subset=None):
 def parse_xsc(path):
     with open(path) as f:
         lines = f.readlines()
-        NamedXsc = namedtuple('NamedXsc', lines[1].split()[1:])
-        return NamedXsc(*map(float, lines[2].split()))
+    NamedXsc = namedtuple('NamedXsc', lines[1].split()[1:])
+    return NamedXsc(*map(float, lines[2].split()))
 
 
 def new_filename_from(path):
