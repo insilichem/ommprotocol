@@ -98,7 +98,8 @@ def stage(input_top, positions=None, forcefields=None, velocities=None, box_vect
           trajectory=None, trajectory_step=10000, stdout_step=1000, restart_step=1000000,
           output='.', verbose=True, project_name=PROJECT_NAME, name=None,
           _system_kwargs=None, _platform=None, _restraint_strength=5,
-          _pressure=1.01325, _integrator=None, _friction=1.0, **kwargs):
+          _pressure=1.01325, _integrator=None, _friction=1.0, _barostat_interval=25,
+          **kwargs):
     """
     Create a new stage of the MD protocol, before production
 
@@ -163,7 +164,8 @@ def stage(input_top, positions=None, forcefields=None, velocities=None, box_vect
         Which integrator to use. Defaults to LangevinIntegrator.
     _friction: float, optional
         Friction coefficient for LangevinIntegrator, in 1/ps. Defaults to 1.0.
-
+    _barostat_interval: float, optional
+        Interval of steps at which barostat updates. Defaults to 25 steps.
     Returns
     -------
     positions, velocities, box_vectors
@@ -220,7 +222,8 @@ def stage(input_top, positions=None, forcefields=None, velocities=None, box_vect
             print('Warning! You appear to be using non-periodic boundary conditions, '
                   'and a barostat, which do not get along well. Barostat is only useful '
                   'with PBC!')
-        system.addForce(mm.MonteCarloBarostat(_pressure*unit.bar, temperature*unit.kelvin, 25))
+        system.addForce(mm.MonteCarloBarostat(_pressure*unit.bar, temperature*unit.kelvin,
+                                              _barostat_interval))
 
     platform_kwargs = {}
     if _platform in ('Reference', 'CPU', 'CUDA', 'OpenCL'):
