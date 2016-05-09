@@ -65,7 +65,8 @@ class Stage(object):
                  trajectory=None, trajectory_every=10000, output='.', verbose=True,
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
-                 restraint_strength=5, constrained_atoms=None):
+                 restraint_strength=5, constrained_atoms=None,
+                 save_state_at_end=True):
         # System properties
         self.handler = handler
         self.positions = positions
@@ -99,7 +100,7 @@ class Stage(object):
         self.restart_every = restart_every
         self.report = report
         self.report_every = report_every
-
+        self.save_state_at_end = save_state_at_end
         # Private attributes
         self._system = None
         self._simulation = None
@@ -146,6 +147,15 @@ class Stage(object):
         with self.attempt_rescue(self.simulation):
             self.simulate()
        
+        uses_pbc = self.system.usesPeriodicBoundaryConditions()
+        state = self.simulation.context.getState(getPositions=True, getVelocities=True,
+                                                 enforcePeriodicBox=uses_pbc)
+        if self.save_state_at_end:
+            path = self.new_filename(suffix='.state.xml')
+            self.simulation.saveState(path)
+        
+        
+        return state.getPositions(), state.getVelocities(), state.getPeriodicBoxVectors()
 
     def minimize(self):
         self.simulation.minimizeEnergy()
@@ -192,6 +202,7 @@ class Stage(object):
     @simulation.deleter
     def simulation(self):
         self._simulation = None
+
 
     @property
     def integrator(self):
