@@ -1,4 +1,33 @@
 # Add 25ns of production (standard system)
+input:
+    topology: blablabla.prmtop
+    positions: blablabla.coor
+    velocities: blablabla.vel
+    box: blablabla.xsc
+    forcefield: amber99sbildn, tip3p # only for PDB
+    charmm_parameters: something.par, something.str # only for PSF
+
+output:
+    name: Bla
+    path: /path/to/bla
+    report: True
+    report_every: 1000
+    trajectory: DCD
+    trajectory_every: 2000
+    restart: XML
+    restart_every: 1000000
+
+conditions:
+    integrator: LangevinIntegrator
+    temperature: 300
+    friction: 1.0
+    timestep: 1.0
+    barostat: True
+    pressure: 1.01325
+    barostat_every: 25
+    constrained_atoms: backbone
+    restrained_atoms: protein
+
 system:
     nonbondedMethod: PME
     nonbondedCutoff: 1.0 # nm
@@ -10,6 +39,3 @@ stages:
     -   name: production
         temperature: 300 # K
         minimize: False
-        md_steps: 25000000
-        trajectory: DCD
-        trajectory_step: 2000
