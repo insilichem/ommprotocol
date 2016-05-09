@@ -22,11 +22,95 @@ class Protocol(object):
 
 class Stage(object):
 
+    """
+    Controls a simulation stage from a SystemHandler instance. It will handle
+    the actual OpenMM system and then the Simulation object. Integrators,
+    barostat and restraints are all easily handled too.
+
+    Using it is easy: instantiate with a SystemHandler object and then call
+    `run()`. However, you can also use it as an OpenMM high-level controller.
+
+
+    Parameters
+    ----------
+    input_top : simtk.openmm.Topology
+        The topology input file (PRMTOP, PDB)
+    positions : simtk.Quantity, optional
+        The starting coordinates of this stage. Only needed if
+        input_top is a PRMTOP file.
+    md_steps : int, optional
+        Number of MD steps to simulate. If 0, no MD will take place
+    timestep : float, optional
+        Integration timestep, in fs. Defaults to 1.0.
+    forcefields : list of str or file-like, optional
+        Forcefields to apply in PDB inputs.
+    velocities : simtk.unit.Quantity, optional
+        The initial velocities of this stage. If None, they will be set
+        to the requested temperature
+    box_vectors : simtk.unit.Quantity, optional
+        Replacement periodic box vectors, instead of input_top's.
+    barostat : bool, optional
+        True for NPT @ 1 atmosphere. False for NVT
+    restrained_atoms, constrained_atoms : str or None, optional
+        Parts of the system that should remain restrained or constrained
+        during the stage. Available values in SELECTORS dict.
+        If None, no atoms will be fixed.
+    minimize : bool, optional
+        If True, minimize before MD
+    minimization_tolerance : float, optional, default=10kJ/mol
+        Threshold value minimization should converge to
+    minimization_max_iterations : int, optional, default=0
+        Limit minimization iterations up to this value. If zero, don't limit.
+    temperature : float, optional
+        Target temperature of system in Kelvin, defaults to 300K
+    trajectory : 'PDB' or 'DCD', optional
+        Output format of trajectory file, if desired.
+    trajectory_step : int, optional
+        Frequency of trajectory write, in number of simulation steps
+    restart_step : int, optional
+        Frequencty of restart file creation. Defaults to 1E6 steps (1ns)
+    stdout_step : int, optional
+        Frequency of stdout print, in number of simulation steps
+    verbose : bool, optional
+        Whether to report information to stdout or not
+    project_name : str, optional
+        Name of the essay (common for several stages). If not set,
+        five random characters will be used.
+    name : str, optional
+        Name of the stage, used as a suffix for the output files generated
+        by this stage. If not supplied, a random string will be used.
+    output : str, optional
+        Location of output files. Working directory by default.
+    platform : str, optional
+        Which platform to use ('CPU', 'CUDA', 'OpenCL'). If not set,
+        OpenMM will choose the fastest available.
+    precision : str, optional
+        Precision model to use: single, double or mixed.
+    system_kwargs : dict, optional
+        Set of options to configure the system. See SYSTEM_KWARGS dict
+        for defaults.
+    restraint_strength : float, optional
+        If restraints are in use, the strength of the applied force in
+        kJ/mol. Defaults to 5.0.
+    pressure : float, optional
+        Barostat pressure, in bar. Defaults to 1.01325.
+    integrator : simtk.openmm.Integrator, optional
+        Which integrator to use. Defaults to LangevinIntegrator.
+    friction : float, optional
+        Friction coefficient for LangevinIntegrator, in 1/ps. Defaults to 1.0.
+    barostat_interval : float, optional
+        Interval of steps at which barostat updates. Defaults to 25 steps.
+    save_state_at_end : bool, optional
+        Wether to create a state.xml file at the end of the stage or not.
+    """
+
     SELECTORS = {
         'all': lambda a: True, 
         None: lambda a: False,
-        'protein': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA'),
-        'protein_no_H': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA') and a.element.symbol != 'H',
+        'protein': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') \
+                   and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA'),
+        'protein_no_H': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') \
+                        and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA') and a.element.symbol != 'H',
         'backbone': lambda a: a.name in ('CA', 'C', 'N')
     }
     NONBONDEDMETHODS = {
@@ -66,6 +150,7 @@ class Stage(object):
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None,
+                 minimization_tolerance=10, minimization_max_iterations=0,
                  save_state_at_end=True):
         # System properties
         self.handler = handler
@@ -79,6 +164,8 @@ class Stage(object):
         # Simulation conditions
         self.steps = steps
         self.minimization = minimization
+        self.minimization_tolerance = minimization_tolerance
+        self.minimization_max_iterations = minimization_max_iterations
         self._barostat = barostat
         self.temperature = temperature
         self.timestep = timestep
@@ -90,8 +177,8 @@ class Stage(object):
         self._platform = platform
         self.precision = precision
         # Output parameters
-        self.project_name = project_name if project_name else self._PROJECTNAME
-        self.name = name if name else random_string(length=5)
+        self.project_name = project_name if project_name is not None else self._PROJECTNAME
+        self.name = name if name is not None else random_string(length=5)
         self.output = output
         self.verbose = verbose
         self.trajectory = trajectory
@@ -107,6 +194,20 @@ class Stage(object):
         self._mass_options = {}
 
     def run(self):
+        """
+        Launch MD simulation, which may consist of:
+        1. Optional minimization
+        2. Actual MD simulation, with n steps.
+
+        This method also handles reporters.
+
+        Returns
+        -------
+        positions, velocities : unit.Quantity([natoms, 3])
+            Position, velocity of each atom in the system
+        box: unit.Quantity([1, 3])
+            Periodic conditions box vectors
+        """
         if self.verbose:
             status = 'Running {} @ {}K'.format(self.name, self.temperature)
             status += ', NPT' if self.barostat else ', NVT'
@@ -123,6 +224,7 @@ class Stage(object):
         if not self.steps:
             return
 
+        # Stdout report
         if self.report:
             mass = {'systemMass': self.system_mass} if self.constrained_atoms else {}
             rep = app.StateDataReporter(sys.stdout, self.report_every, step=True, 
@@ -131,11 +233,13 @@ class Stage(object):
                                         remainingTime=True, speed=True, 
                                         totalSteps=self.steps, separator='\t', **mass)
             self.simulation.reporters.append(rep)
+        # Trajectory / movie files
         if self.trajectory:
             suffix = '.{}'.format(self.trajectory.lower())
             path = self.new_filename(suffix=suffix)
             rep = self.reporter(self.trajectory)(path, self.trajectory_every)
             self.simulation.reporters.append(rep)
+        # Checkpoint or restart files
         if self.restart:
             suffix = '.{}'.format(self.restart.lower())
             path = self.new_filename(suffix=suffix)
@@ -143,7 +247,8 @@ class Stage(object):
             self.simulation.reporters.append(rep)
         
         if self.verbose:
-            print('  Running MD with {} steps'.format(self.steps))
+            pbc = 'PBC' if self.system.usesPeriodicBoundaryConditions() else ''
+            print('  Running {} MD for {} steps'.format(pbc, self.steps))
         with self.attempt_rescue(self.simulation):
             self.simulate()
        
@@ -154,13 +259,23 @@ class Stage(object):
             path = self.new_filename(suffix='.state.xml')
             self.simulation.saveState(path)
         
-        
         return state.getPositions(), state.getVelocities(), state.getPeriodicBoxVectors()
 
-    def minimize(self):
-        self.simulation.minimizeEnergy()
+    def minimize(self, tolerance=None, max_iterations=None):
+        """
+        Minimize energy of the system until meeting `tolerance` or
+        performing `max_iterations`.
+        """
+        if tolerance is None:
+            tolerance = self.minimization_tolerance 
+        if max_iterations is None:
+            max_iterations = self.minimization_max_iterations
+        self.simulation.minimizeEnergy(tolerance * u.kilojoules_per_mole, max_iterations)
 
     def simulate(self, steps=None):
+        """
+        Advance simulation n steps
+        """
         if steps is None:
             steps = self.steps
         self.simulation.step(steps)
