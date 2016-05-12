@@ -1,6 +1,6 @@
 package:
   name: ommprotocol
-  version: "0.0.7"
+  version: "0.1.0"
 
 about:
   home: https://github.com/insilichem/ommprotocol
