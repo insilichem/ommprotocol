@@ -30,7 +30,7 @@ from openmoltools.utils import create_ffxml_file
 import yaml
 # Own
 from ommprotocol import ommprotocol
-from ommprotocol.core import NONBONDEDMETHODS, CONSTRAINTS
+from ommprotocol.md import NONBONDEDMETHODS, CONSTRAINTS
 from ommprotocol.utils import sanitize_path_for_file
 
 

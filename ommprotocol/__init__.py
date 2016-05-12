@@ -8,7 +8,7 @@
 #################################################
 
 from ommprotocol.io import prepare_input
-from ommprotocol.core import protocol
+from ommprotocol.md import protocol
 
 
 def run_protocol():
