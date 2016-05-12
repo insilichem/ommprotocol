@@ -18,6 +18,7 @@ import os
 import sys
 from collections import namedtuple
 from argparse import ArgumentParser
+from datetime import datetime, timedelta
 # OpenMM and 3rd party helpers
 from simtk import unit as u
 from simtk.openmm.app import (Topology, PDBFile, ForceField, AmberPrmtopFile,
@@ -29,6 +30,8 @@ from openmoltools.utils import create_ffxml_file
 import yaml
 # Own
 from ommprotocol import ommprotocol
+from ommprotocol.core import NONBONDEDMETHODS, CONSTRAINTS
+from ommprotocol.utils import sanitize_path_for_file
 
 
 class YamlLoader(yaml.Loader):
@@ -42,18 +45,17 @@ class YamlLoader(yaml.Loader):
         """Initialise Loader."""
 
         try:
-            self._root = os.path.split(stream.name)[0]
+            self._root = os.path.dirname(stream.name)
         except AttributeError:
             self._root = os.path.curdir
 
-        yaml.Loader.__init__(stream)
+        yaml.Loader.__init__(self, stream)
 
     def construct_include(self, node):
         """Include file referenced at node."""
 
-        filename = os.path.abspath(os.path.join(
-            self._root, self.construct_scalar(node)
-        ))
+        filename = os.path.join(self._root, self.construct_scalar(node))
+        filename = os.path.abspath(filename)
         extension = os.path.splitext(filename)[1].lstrip('.')
 
         with open(filename, 'r') as f:
@@ -78,10 +80,10 @@ class MultiFormatLoader(object):
     """
 
     @classmethod
-    def load(cls, path, **kwargs):
+    def load(cls, path, *args, **kwargs):
         name, ext = os.path.splitext(path)
         try:
-            return cls._loaders(ext.lsplit('.'))(path, **kwargs)
+            return cls._loaders(ext.lstrip('.'))(path, *args, **kwargs)
         except KeyError:
             raise NotImplementedError('Unknown loader for format {}'.format(ext))
         except IOError:
@@ -115,7 +117,7 @@ class InputContainer(object):
 
     @topology.setter
     def topology(self, obj):
-        self._topology = validate(obj, (Topology, None))
+        self._topology = obj  # assertinstance(obj, (Topology, None))
 
     @property
     def positions(self):
@@ -123,7 +125,7 @@ class InputContainer(object):
 
     @positions.setter
     def positions(self, obj):
-        self._positions = validate(obj, (u.Quantity, None))
+        self._positions = obj  # assertinstance(obj, (u.Quantity, None))
 
     @property
     def velocities(self):
@@ -131,7 +133,7 @@ class InputContainer(object):
 
     @velocities.setter
     def velocities(self, obj):
-        self._velocities = validate(obj, (u.Quantity, None))
+        self._velocities = obj  # assertinstance(obj, (u.Quantity, None))
 
     @property
     def box(self):
@@ -139,7 +141,7 @@ class InputContainer(object):
 
     @box.setter
     def box(self, obj):
-        self._box = validate(obj, (u.Quantity, None))
+        self._box = obj  # assertinstance(obj, (u.Quantity, None))
 
     @property
     def has_topology(self):
@@ -177,7 +179,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                 'psf': cls.from_psf}[ext]
 
     @classmethod
-    def from_pdb(cls, path, forcefields=None):
+    def from_pdb(cls, path, forcefields=None, **kwargs):
         """
         Loads topology, positions and, potentially, velocities and vectors,
         from a PDB file
@@ -196,9 +198,9 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             box vectors. Forcefields are embedded in the `master` attribute.
         """
         pdb = PDBFile(path)
-        box = pdb.topology.getUnitCellDimensions()
-        positions = pdb.positions
-        velocities = getattr(pdb, 'velocities', None)
+        box = kwargs.pop('box', pdb.topology.getPeriodicBoxVectors())
+        positions = kwargs.pop('positions', pdb.positions)
+        velocities = kwargs.pop('velocities', getattr(pdb, 'velocities', None))
 
         if not forcefields:
             forcefields = ommprotocol.FORCEFIELDS
@@ -206,10 +208,11 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                   ', '.join(forcefields))
         pdb.forcefield = ForceField(*process_forcefield(*forcefields))
 
-        return cls(master=pdb, topology=pdb.topology, positions=positions, velocities=velocities, box=box, path=path)
+        return cls(master=pdb, topology=pdb.topology, positions=positions,
+                   velocities=velocities, box=box, path=path, **kwargs)
 
     @classmethod
-    def from_prmtop(cls, path):
+    def from_prmtop(cls, path, positions=None, **kwargs):
         """
         Loads Amber Parm7 parameters and topology file
 
@@ -217,17 +220,23 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         ----------
         path : str
             Path to *.prmtop or *.top file
+        positions : simtk.unit.Quantity
+            Atomic positions
 
         Returns
         -------
         prmtop : SystemHandler
             SystemHandler with topology
         """
+        if positions is None:
+            raise ValueError('TOP/PRMTOP files require initial positions.')
         prmtop = AmberPrmtopFile(path)
-        return cls(master=prmtop, topology=prmtop.topology, path=path)
+        box = kwargs.pop('box', prmtop.topology.getPeriodicBoxVectors())
+        return cls(master=prmtop, topology=prmtop.topology, positions=positions, box=box,
+                   path=path, **kwargs)
 
     @classmethod
-    def from_psf(cls, path, charmm_parameters=None):
+    def from_psf(cls, path, positions=None, charmm_parameters=None, **kwargs):
         """
         Loads PSF Charmm structure from `path`. Requires `charmm_parameters`.
 
@@ -246,39 +255,48 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         """
         psf = CharmmPsfFile(path)
         if charmm_parameters is None:
-            raise ValueError('ERROR: PSF files require charmm_parameters')
+            raise ValueError('PSF files require key `charmm_parameters`.')
+        if positions is None:
+            raise ValueError('PSF files require key `positions`.')
         psf.parmset = CharmmParameterSet(*charmm_parameters)
         psf.loadParameters(psf.parmset)
-        return cls(master=psf, topology=psf.topology, path=path)
+        return cls(master=psf, topology=psf.topology, positions=positions, path=path,
+                   **kwargs)
 
     def __init__(self, master=None, **kwargs):
         InputContainer.__init__(self, **kwargs)
+        if isinstance(master, str):
+            raise ValueError('To instantiate from file, use .load() or '
+                             'one of the .from_*() methods.')
         self.master = master
         self._path = kwargs.get('path')
 
-    def create_system(self, system_options=None):
+    def create_system(self, **system_options):
         """
         Create an OpenMM system for every supported topology file with given system options
         """
         if self.master is None:
-            # Probably instantiated from a restart file
             raise ValueError('This instance is not able to create systems.')
-
-        if system_options is None:
-            system_options = {}
 
         if isinstance(self.master, PDBFile):
             if not hasattr(self.master, 'forcefield'):
                 raise ValueError('PDB topology files must be instanciated with forcefield paths.')
-            return self.master.forcefield.createSystem(self.topology, **system_options)
+            system = self.master.forcefield.createSystem(self.topology, **system_options)
 
-        if isinstance(self.master, AmberPrmtopFile):
-            return self.master.createSystem(**system_options)
+        elif isinstance(self.master, AmberPrmtopFile):
+            system = self.master.createSystem(**system_options)
 
-        if isinstance(self.master, CharmmPsfFile):
+        elif isinstance(self.master, CharmmPsfFile):
             if not hasattr(self.master, 'parmset'):
                 raise ValueError('PSF topology files must be instanciated with Charmm parameters.')
-            return self.master.createSystem(self.master.parmset, **system_options)
+            system = self.master.createSystem(self.master.parmset, **system_options)
+        
+        else:
+            raise NotImplementedError('This handler is not able to create systems.')
+
+        if self.has_box:
+            system.setDefaultPeriodicBoxVectors(*self.box)
+        return system
 
 
 class Positions(MultiFormatLoader):
@@ -389,9 +407,39 @@ class BoxVectors(MultiFormatLoader):
             return NamedXsc(*map(float, lines[2].split()))
 
         xsc = parse(path)
-        box_vectors = u.Quantity(
-            [[xsc.a_x, 0, 0], [0, xsc.b_y, 0], [0, 0, xsc.c_z]], unit=u.angstroms)
-        return box_vectors
+        return u.Quantity([[xsc.a_x, xsc.a_y, xsc.a_z], 
+                           [xsc.b_x, xsc.b_y, xsc.b_z],
+                           [xsc.c_x, xsc.c_y, xsc.c_z]], unit=u.angstroms)
+
+    @classmethod
+    def from_csv(cls, path):
+        """
+        Get box vectors from comma-separated values in file `path`.
+
+        The csv file must containt only one line, which in turn can contain
+        three values (orthogonal vectors) or nine values (triclinic box).
+
+        The values should be in nanometers.
+
+        Parameters
+        ----------
+        path : str
+            Path to CSV file
+
+        Returns
+        -------
+        vectors : simtk.unit.Quantity([3, 3], unit=nanometers
+        """
+        with open(path) as f:
+            fields = map(float, next(f).split(','))
+        if len(fields) == 3:
+            return u.Quantity([[fields[0], 0, 0], 
+                               [0, fields[1], 0],
+                               [0, 0, fields[2]]], unit=u.nanometers)
+        if len(fields) == 9:
+            return u.Quantity([fields[0:3], 
+                               fields[3:6],
+                               fields[6:9]], unit=u.nanometers)
 
 
 class Restart(MultiFormatLoader, InputContainer):
@@ -441,47 +489,180 @@ class Restart(MultiFormatLoader, InputContainer):
                 'restart': cls.from_rst}[ext]
 
 
-def parse_arguments(argv=None):
+class ProgressBarReporter(object):
+    """
+    A simple progress bar reporter for stdout.
+    """
+    def __init__(self, file, interval, total_steps=None, margin=4):
+        """Create a ProgressBarReporter.
+
+        Parameters
+        ----------
+        file : string or open file object
+            The file to write to. Normally stdout. Will overwrite!
+        interval : int
+            The interval (in time steps) at which to write checkpoints.
+        margin : int
+            Blank padding to write before bar.
+        """
+        if isinstance(file, str):
+            self._own_handle = True
+            self._out = open(file, 'w', 0)
+        else:
+            self._out = file
+            self._own_handle = False
+
+        self.interval = interval
+        self.margin = margin
+        self.total_steps = total_steps
+        self._initialized = False
+        
+
+    def describeNextReport(self, simulation):
+        """Get information about the next report this object will generate.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+
+        Returns
+        -------
+        tuple
+            A five element tuple. The first element is the number of steps
+            until the next report. The remaining elements specify whether
+            that report will require positions, velocities, forces, and
+            energies respectively.
+        """
+        steps = self.interval - simulation.currentStep%self.interval
+        return (steps, False, False, False, False)
+
+    def report(self, simulation, state):
+        """Generate a report.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+        state : State
+            The current state of the simulation
+        """
+        if not self._initialized:
+            self._initial_clock_time  = datetime.now()
+            self._initial_simulation_time = state.getTime()
+            self._initial_steps = simulation.currentStep
+            self._initialized = True
+
+        steps = simulation.currentStep
+        time = datetime.now() - self._initial_clock_time
+        days = time.total_seconds()/86400.0
+        ns = (state.getTime()-self._initial_simulation_time).value_in_unit(u.nanosecond)
+
+        margin = ' ' * self.margin
+        ns_day = ns/days
+        delta = (self.total_steps-steps)*time/steps
+        # remove microseconds to have cleaner output
+        remaining = timedelta(days=delta.days, seconds=delta.seconds)
+        percentage = 100.0*steps/self.total_steps
+        
+        template = '{}{}/{} steps ({:.1f}%) - {} left @ {:.1f} ns/day                        \r'
+        report = template.format(margin, steps, self.total_steps, percentage, remaining, ns_day)
+        self._out.write(report)
+
+    def __del__(self):
+        self._out.write('\n')
+        if self._own_handle:
+            self._out.close()
+
+
+###########################
+# Input preparation
+###########################
+
+def prepare_input(argv=None):
+    """
+    Get, parse and prepare input file.
+    """
     p = ArgumentParser(description='insiliChem.bio OpenMM launcher: '
                        'easy to deploy MD protocols for OpenMM')
     p.add_argument('input', metavar='INPUT FILE', type=str,
                    help='YAML input file')
-    p.add_argument('-p', '--platform', type=str, choices=['CPU', 'CUDA', 'OpenCL'],
-                   help='Hardware platform to use: CPU, CUDA or OpenCL')
-    p.add_argument('-q', '--precision', type=str, choices=['single', 'double', 'mixed'],
-                   help='Precision model to use: single, double, or mixed')
+    args = p.parse_args(argv if argv else sys.argv[1:])
 
-    return p.parse_args(argv if argv else sys.argv[1:])
+    # Load config file
+    with open(args.input) as f:
+        cfg = yaml.load(f, YamlLoader)
+    # Paths and dirs
+    cfg['_path'] = os.path.abspath(args.input)
+    cfg['system_options'] = prepare_system_options(cfg)
+    cfg['outputpath'] = sanitize_path_for_file(cfg.get('outputpath', '.'), args.input)
+    try: 
+        os.makedirs(cfg['outputpath'])
+    except OSError:
+        pass
+
+    handler = prepare_handler(cfg)
+
+    return handler, cfg
+
+
+def prepare_handler(cfg):
+    """
+    Load all files into single object.
+    """
+    positions, velocities, boxvectors = None, None, None
+
+    if 'checkpoint' in cfg:
+        restart_path = sanitize_path_for_file(cfg['checkpoint'], cfg['_path'])
+        restart = Restart.load(restart_path)
+        positions = restart.positions
+        velocities = restart.velocities
+        boxvectors = restart.boxvectors
+
+    if 'positions' in cfg:
+        positions_path = sanitize_path_for_file(cfg.pop('positions'), cfg['_path'])
+        positions = Positions.load(positions_path)
+
+    if 'velocities' in cfg:
+        velocities_path = sanitize_path_for_file(cfg.pop('velocities'), cfg['_path'])
+        velocities = Velocities.load(velocities_path)
+
+    if 'box' in cfg:
+        boxvectors_path = sanitize_path_for_file(cfg.pop('box', None), cfg['_path'])
+        boxvectors = BoxVectors.load(boxvectors_path)
+
+    return SystemHandler.load(cfg.pop('topology'), positions=positions, velocities=velocities,
+                              box=boxvectors, forcefield=cfg.pop('forcefield', None),
+                              charmm_parameters=cfg.pop('charmm_parameters', None))
+
+
+def prepare_system_options(cfg, fill_not_found=True):
+    """
+    Retrieve and delete (pop) system options from input configuration.
+    """
+    d = {}
+    if fill_not_found:
+        d['nonbondedMethod'] = NONBONDEDMETHODS.get(cfg.pop('nonbondedMethod', None))
+        d['nonbondedCutoff'] = cfg.pop('nonbondedCutoff', None) * u.nanometers
+        d['constraints'] = CONSTRAINTS.get(cfg.pop('constraints', None))
+        for key in ['rigidWater', 'ewaldErrorTolerance']:
+            d[key] = cfg.pop(key, None)
+    else:
+        if 'nonbondedMethod' in cfg:
+            d['nonbondedMethod'] = NONBONDEDMETHODS.get(cfg.pop('nonbondedMethod'))
+        if 'nonbondedCutoff' in cfg:
+            d['nonbondedCutoff'] = cfg.pop('nonbondedCutoff') * u.nanometers
+        if 'constraints' in cfg:
+            d['constraints'] = CONSTRAINTS.get(cfg.pop('constraints'))
+        for key in ['rigidWater', 'ewaldErrorTolerance']:
+            if key in 'cfg':
+                d[key] = cfg.pop(key)
+    return d
+
 
 ###########################
 # Helpers
 ###########################
-
-
-def assert_not_exists(path):
-    """
-    If path exists, modify to add a counter in the filename. Useful
-    for preventing accidental overrides. For example, if `file.txt`
-    exists, check if `file.1.txt` also exists. Repeat until we find
-    a non-existing version, such as `file.12.txt`.
-
-    Parameters
-    ----------
-    path : str
-        Path to be checked
-
-    Returns
-    -------
-    newpath : str
-        A modified version of path with a counter right before the extension.
-    """
-    name, ext = os.path.splitext(path)
-    i = 1
-    while os.path.exists(path):
-        path = '{}.{}{}'.format(name, i, ext)
-        i += 1
-    return path
-
 
 def process_forcefield(*forcefields):
     """
@@ -493,15 +674,3 @@ def process_forcefield(*forcefields):
             yield create_ffxml_file(forcefield)
         else:
             yield forcefield
-
-
-def validate(object_, type_):
-    """
-    Make sure `object_` is of type `type_`. Else, raise TypeError.
-    """
-    if isinstance(object_, type_):
-        return object_
-    raise TypeError('{} must be instance of {}'.format(object_, type_))
-
-def random_string(length=5):
-    return ''.join(choice(ascii_letters) for _ in range(length))
