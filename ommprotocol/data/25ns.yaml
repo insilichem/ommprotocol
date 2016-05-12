@@ -1,41 +1,50 @@
 # Add 25ns of production (standard system)
-input:
-    topology: blablabla.prmtop
-    positions: blablabla.coor
-    velocities: blablabla.vel
-    box: blablabla.xsc
-    forcefield: amber99sbildn, tip3p # only for PDB
-    charmm_parameters: something.par, something.str # only for PSF
 
-output:
-    name: Bla
-    path: /path/to/bla
-    report: True
-    report_every: 1000
-    trajectory: DCD
-    trajectory_every: 2000
-    restart: XML
-    restart_every: 1000000
+# input
+topology: sys.top
+positions: sys.crd
+# velocities: blablabla.vel
+# box: blablabla.xsc
+# forcefield: amber99sbildn, tip3p # only for PDB
+# charmm_parameters: something.par, something.str # only for PSF
 
-conditions:
-    integrator: LangevinIntegrator
-    temperature: 300
-    friction: 1.0
-    timestep: 1.0
-    barostat: True
-    pressure: 1.01325
-    barostat_every: 25
-    constrained_atoms: backbone
-    restrained_atoms: protein
+# output
+name: sys
+outputpath: output
+report: True
+report_every: 1000
+trajectory: DCD
+trajectory_every: 2000
+restart: XML
+restart_every: 1000000
 
-system:
-    nonbondedMethod: PME
-    nonbondedCutoff: 1.0 # nm
-    constraints: None
-    rigidWater: False
-    ewaldErrorTolerance: 0.0005
+# hardware
+platform: CUDA
+precision: mixed
 
+# conditions
+integrator: LangevinIntegrator
+temperature: 300
+friction: 1.0
+timestep: 1.0
+barostat: True
+pressure: 1.01325
+barostat_every: 25
+constrained_atoms: backbone
+restrained_atoms: protein
+
+# OpenMM system options
+nonbondedMethod: PME
+nonbondedCutoff: 1.0 # nm
+constraints: HBonds
+rigidWater: True
+ewaldErrorTolerance: 0.0005
+
+# protocol
 stages:
     -   name: production
         temperature: 300 # K
         minimize: False
+        steps: 100
+        report: True
+        report_every: 10
