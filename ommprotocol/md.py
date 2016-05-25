@@ -91,7 +91,8 @@ def protocol(handler, cfg):
         stage_system_options = io.prepare_system_options(stage_options, fill_not_found=False)
         options.update(stage_options)
         options['system_options'].update(stage_system_options)
-        pos, vel, box = Stage(handler, positions=pos, velocities=vel, box=box, **options).run()
+        pos, vel, box = Stage(handler, positions=pos, velocities=vel, box=box,
+                              total_stages=len(cfg['stages']), **options).run()
 
 
 class Stage(object):
@@ -175,8 +176,10 @@ class Stage(object):
         Interval of steps at which barostat updates. Defaults to 25 steps.
     save_state_at_end : bool, optional
         Whether to create a state.xml file at the end of the stage or not.
+    total_stages : int, optional
     """
     _PROJECTNAME = random_string(length=5)
+    _stage_number = [0]
 
     def __init__(self, handler, positions=None, velocities=None, box=None,
                  steps=0, minimization=True, barostat=True, temperature=300,
@@ -187,7 +190,7 @@ class Stage(object):
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None, friction=1.0,
                  minimization_tolerance=10, minimization_max_iterations=10000,
-                 save_state_at_end=True, **kwargs):
+                 save_state_at_end=True, total_stages=None, **kwargs):
         # System properties
         self.handler = handler
         self.positions = positions
@@ -224,6 +227,7 @@ class Stage(object):
         self.report = report
         self.report_every = report_every
         self.save_state_at_end = save_state_at_end
+        self.total_stages = total_stages
         # Private attributes
         self._system = None
         self._simulation = None
@@ -233,6 +237,7 @@ class Stage(object):
         self._trajectory_reporter = None
         self._restart_reporter = None
         self._mass_options = {}
+        self._stage_number[0] += 1
 
     def run(self):
         """
@@ -250,7 +255,10 @@ class Stage(object):
             Periodic conditions box vectors
         """
         if self.verbose:
-            status = 'Running {} @ {}K'.format(self.name, self.temperature)
+            status = '#{}'.format(self._stage_number[0])
+            if self.total_stages is not None:
+                status += '/{}'.format(self.total_stages)
+            status += ': {} @ {}K'.format(self.name, self.temperature)
             status += ', NPT' if self.barostat else ', NVT'
             if self.restrained_atoms:
                 status += ' [Restrained {}]'.format(self.restrained_atoms)
