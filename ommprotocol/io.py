@@ -618,7 +618,7 @@ def prepare_handler(cfg):
         restart = Restart.load(restart_path)
         positions = restart.positions
         velocities = restart.velocities
-        boxvectors = restart.boxvectors
+        boxvectors = restart.box
 
     if 'positions' in cfg:
         positions_path = sanitize_path_for_file(cfg.pop('positions'), cfg['_path'])
