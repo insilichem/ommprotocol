@@ -15,7 +15,7 @@ import os
 import random
 import string
 
-def assert_not_exists(path):
+def assert_not_exists(path, sep='.'):
     """
     If path exists, modify to add a counter in the filename. Useful
     for preventing accidental overrides. For example, if `file.txt`
@@ -35,7 +35,7 @@ def assert_not_exists(path):
     name, ext = os.path.splitext(path)
     i = 1
     while os.path.exists(path):
-        path = '{}.{}{}'.format(name, i, ext)
+        path = '{}{}{}{}'.format(name, sep, i, ext)
         i += 1
     return path
 

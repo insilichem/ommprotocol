@@ -485,6 +485,8 @@ class Restart(MultiFormatLoader, InputContainer):
     @classmethod
     def _loaders(cls, ext):
         return {'xml': cls.from_xml,
+                'xmlstate': cls.from_xml,
+                'state': cls.from_xml,
                 'rs': cls.from_rst,
                 'rst': cls.from_rst,
                 'restart': cls.from_rst}[ext]

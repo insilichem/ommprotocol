@@ -305,7 +305,7 @@ class Stage(object):
                 self.simulate()
 
         if self.save_state_at_end:
-            path = self.new_filename(suffix='.state.xml')
+            path = self.new_filename(suffix='.state')
             self.simulation.saveState(path)
 
         # Save and return state
@@ -484,8 +484,15 @@ class Stage(object):
     @property
     def restart_reporter(self):
         if self._restart_reporter is None:
-            suffix = '.{}'.format(self.restart.lower())
-            path = self.new_filename(suffix=suffix)
+            suffix = '.{}.{}'.format(self.restart.lower(), self.restart_every)
+            path, ext_or_int, n = self.new_filename(suffix=suffix).rsplit('.', 2)
+            try:
+                ext_or_int = int(ext_or_int)  # Is ext an integer?
+            except ValueError: # Ext is the actual file extension
+                path = '{}.{}'.format(path, ext_or_int)
+            else: # Ext is an int! Reformat
+                name, ext = os.path.splitext(path)
+                path = '{}.{}{}'.format(name, ext_or_int, ext)
             rep = self.reporter(self.restart)(path, self.restart_every)
             self._restart_reporter = rep
         return self._restart_reporter
@@ -577,9 +584,9 @@ class Stage(object):
 
     def backup_simulation(self):
         """
-        Creates an emergency report run, state.xml included
+        Creates an emergency report run, .state included
         """
-        path = self.new_filename(suffix='.state.xml')
+        path = self.new_filename(suffix='_emergency.state')
         self.simulation.saveState(path)
         uses_pbc = self.system.usesPeriodicBoundaryConditions()
         state = self.simulation.context.getState(getPositions=True, getVelocities=True,
