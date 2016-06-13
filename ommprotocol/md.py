@@ -8,27 +8,30 @@
 #################################################
 
 # Stdlib
+from __future__ import print_function, division, absolute_import
 import os
 import sys
 from contextlib import contextmanager
-from functools import partial
 # 3rd party
 from simtk import unit as u
 from simtk import openmm as mm
 from simtk.openmm import app
-from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
-from mdtraj.reporters import HDF5Reporter
 # Own
-from ommprotocol import io
-from ommprotocol.utils import random_string, assert_not_exists
+from . import io
+from .utils import random_string, assert_not_exists
 
+###########################
+# Defaults
+###########################
 
+FORCEFIELDS = ['amber99sbildn.xml', 'tip3p.xml']
 SELECTORS = {
-    'all': lambda a: True,
     None: lambda a: False,
+    'all': lambda a: True,
     'protein': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA'),
     'protein_no_H': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA') and a.element.symbol != 'H',
-    'backbone': lambda a: a.name in ('CA', 'C', 'N')
+    'backbone': lambda a: a.name in ('CA', 'C', 'N'),
+    'calpha': lambda a: a.name == 'CA'
 }
 NONBONDEDMETHODS = {
     'NoCutoff': app.NoCutoff, '': app.NoCutoff, None: app.NoCutoff, 'None': app.NoCutoff,
@@ -43,15 +46,7 @@ CONSTRAINTS = {
     'AllBonds': app.AllBonds,
     'HAngles': app.HAngles
 }
-REPORTERS = {
-    'PDB': app.PDBReporter,
-    'DCD': app.DCDReporter,
-    'CHK': app.CheckpointReporter,
-    'HDF5':  HDF5Reporter,
-    'NETCDF': NetCDFReporter,
-    'MDCRD': MdcrdReporter,
-    'RS': partial(RestartReporter, write_multiple=True, netcdf=True),
-}
+
 INTEGRATORS = {
     'BrownianIntegrator': mm.BrownianIntegrator,
     'LangevinIntegrator': mm.LangevinIntegrator,
@@ -66,7 +61,6 @@ SYSTEM_OPTIONS = {
 DEFAULT_OPTIONS = {
     'system_options': SYSTEM_OPTIONS
 }
-
 
 def protocol(handler, cfg):
     """
@@ -91,8 +85,10 @@ def protocol(handler, cfg):
         stage_system_options = io.prepare_system_options(stage_options, fill_not_found=False)
         options.update(stage_options)
         options['system_options'].update(stage_system_options)
-        pos, vel, box = Stage(handler, positions=pos, velocities=vel, box=box,
-                              total_stages=len(cfg['stages']), **options).run()
+        stage = Stage(handler, positions=pos, velocities=vel, box=box,
+                      total_stages=len(cfg['stages']), **options)
+        pos, vel, box = stage.run()
+        del stage
 
 
 class Stage(object):
@@ -139,11 +135,15 @@ class Stage(object):
         Target temperature of system in Kelvin, defaults to 300K
     trajectory : 'PDB' or 'DCD', optional
         Output format of trajectory file, if desired.
-    trajectory_step : int, optional
+    trajectory_every : int, optional
         Frequency of trajectory write, in number of simulation steps
-    restart_step : int, optional
+    trajectory_new_every : int, optional
+        Create a new file for trajectory (only DCD) every n steps.
+    trajectory_atom_subset : int, optional
+        Save information for just these atoms (only DCD).
+    restart_every : int, optional
         Frequencty of restart file creation. Defaults to 1E6 steps (1ns)
-    stdout_step : int, optional
+    stdout_every : int, optional
         Frequency of stdout print, in number of simulation steps
     verbose : bool, optional
         Whether to report information to stdout or not
@@ -183,14 +183,16 @@ class Stage(object):
 
     def __init__(self, handler, positions=None, velocities=None, box=None,
                  steps=0, minimization=True, barostat=True, temperature=300,
-                 timestep=1.0, pressure=1.01325, integrator='LangevinIntegrator', 
+                 timestep=1.0, pressure=1.01325, integrator='LangevinIntegrator',
                  barostat_interval=25, system_options=None, platform=None, precision=None,
-                 trajectory=None, trajectory_every=2000, outputpath='.', verbose=True,
+                 trajectory=None, trajectory_every=2000, outputpath='.', 
+                 trajectory_atom_subset=None, trajectory_new_every=None, 
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None, friction=1.0,
                  minimization_tolerance=10, minimization_max_iterations=10000,
-                 save_state_at_end=True, total_stages=None, **kwargs):
+                 save_state_at_end=True, total_stages=None, verbose=True,
+                 **kwargs):
         # System properties
         self.handler = handler
         self.positions = positions
@@ -201,7 +203,7 @@ class Stage(object):
         self.restraint_strength = restraint_strength
         self.constrained_atoms = constrained_atoms
         # Simulation conditions
-        self.steps = steps
+        self.steps = int(steps)
         self.minimization = minimization
         self.minimization_tolerance = minimization_tolerance
         self.minimization_max_iterations = minimization_max_iterations
@@ -211,7 +213,7 @@ class Stage(object):
         self.pressure = pressure
         self._integrator_name = integrator
         self.friction = friction
-        self.barostat_interval = barostat_interval
+        self.barostat_interval = int(barostat_interval)
         # Hardware
         self._platform = platform
         self.precision = precision
@@ -221,11 +223,13 @@ class Stage(object):
         self.outputpath = outputpath
         self.verbose = verbose
         self.trajectory = trajectory
-        self.trajectory_every = trajectory_every
+        self.trajectory_every = int(trajectory_every)
+        self.trajectory_new_every = int(trajectory_new_every)
+        self.trajectory_atom_subset = self._mask_selection(trajectory_atom_subset)
         self.restart = restart
-        self.restart_every = restart_every
+        self.restart_every = int(restart_every)
         self.report = report
-        self.report_every = report_every
+        self.report_every = int(report_every)
         self.save_state_at_end = save_state_at_end
         self.total_stages = total_stages
         # Private attributes
@@ -284,7 +288,7 @@ class Stage(object):
             if self.progress_reporter not in self.simulation.reporters:
                 self.simulation.reporters.append(self.progress_reporter)
 
-            # Log report  
+            # Log report
             if self.report and self.log_reporter not in self.simulation.reporters:
                 self.simulation.reporters.append(self.log_reporter)
 
@@ -405,13 +409,13 @@ class Stage(object):
 
     def reporter(self, name):
         try:
-            return REPORTERS[name.upper()]
+            return io.REPORTERS[name.upper()]
         except KeyError:
             raise NotImplementedError('Reporter {} not found'.format(name))
 
     def apply_barostat(self):
         if not self.system.usesPeriodicBoundaryConditions():
-            raise ValueError('Barostat MUST be used with PBC conditions.')
+            raise ValueError('Barostat can only be used with PBC conditions.')
         self.system.addForce(mm.MonteCarloBarostat(self.pressure*u.bar,
                                                    self.temperature*u.kelvin,
                                                    self.barostat_interval))
@@ -427,7 +431,7 @@ class Stage(object):
         subset = self.subset(self.restrained_atoms)
         positions = self.positions if self.positions is not None else self.handler.positions
         self.apply_force(self.handler.topology, positions, force, subset)
-    
+
     @property
     def progress_reporter(self):
         if self._progress_reporter is None:
@@ -469,7 +473,11 @@ class Stage(object):
         if self._trajectory_reporter is None:
             suffix = '.{}'.format(self.trajectory.lower())
             path = self.new_filename(suffix=suffix)
-            rep = self.reporter(self.trajectory)(path, self.trajectory_every)
+            options = {}
+            if self.trajectory == 'DCD':
+                options.update({'new_every': self.trajectory_new_every,
+                                'atomSubset': self.trajectory_atom_subset})
+            rep = self.reporter(self.trajectory)(path, self.trajectory_every, **options)
             self._trajectory_reporter = rep
         return self._trajectory_reporter
 
@@ -488,9 +496,9 @@ class Stage(object):
             path, ext_or_int, n = self.new_filename(suffix=suffix).rsplit('.', 2)
             try:
                 ext_or_int = int(ext_or_int)  # Is ext an integer?
-            except ValueError: # Ext is the actual file extension
+            except ValueError:  # Ext is the actual file extension
                 path = '{}.{}'.format(path, ext_or_int)
-            else: # Ext is an int! Reformat
+            else:  # Ext is an int! Reformat
                 name, ext = os.path.splitext(path)
                 path = '{}.{}{}'.format(name, ext_or_int, ext)
             rep = self.reporter(self.restart)(path, self.restart_every)
@@ -595,3 +603,6 @@ class Stage(object):
         for reporter in self.simulation.reporters:
             if not isinstance(reporter, app.StateDataReporter):
                 reporter.report(self.simulation, state)
+
+    def _mask_selection(self, expression):
+        pass

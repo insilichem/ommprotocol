@@ -1,6 +1,6 @@
 package:
   name: ommprotocol
-  version: "0.1.0"
+  version: "0.1.1"
 
 about:
   home: https://github.com/insilichem/ommprotocol
@@ -18,7 +18,7 @@ requirements:
   run:
     - python
     - openmm
-    - pyyaml
+    - ruamel_yaml
     - parmed
     - openmoltools
     - mdtraj

@@ -14,25 +14,36 @@ ommprotocol.io
 Handle IO stuff
 """
 # Python stdlib
+from __future__ import print_function, division, absolute_import
 import os
 import sys
 from collections import namedtuple
 from argparse import ArgumentParser
 from datetime import datetime, timedelta
+from functools import partial
 # OpenMM and 3rd party helpers
+try:
+    import ruamel_yaml as yaml
+except ImportError:
+    import yaml
 from simtk import unit as u
-from simtk.openmm.app import (Topology, PDBFile, ForceField, AmberPrmtopFile,
+from simtk.openmm.app import (PDBFile, ForceField, AmberPrmtopFile, PDBReporter,
                               AmberInpcrdFile, CharmmPsfFile, CharmmParameterSet)
 from simtk.openmm import XmlSerializer
 from parmed.namd import NamdBinCoor, NamdBinVel
 from parmed import load_file as parmed_load_file
 from openmoltools.utils import create_ffxml_file
-import yaml
+from mdtraj.reporters import DCDReporter
+# 3rd party
+from simtk.openmm import app
+from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
+from mdtraj.reporters import HDF5Reporter
 # Own
-from ommprotocol import ommprotocol
-from ommprotocol.md import NONBONDEDMETHODS, CONSTRAINTS
-from ommprotocol.utils import sanitize_path_for_file
+from .utils import sanitize_path_for_file
+from .md import NONBONDEDMETHODS, CONSTRAINTS, FORCEFIELDS
 
+if sys.version_info.major == 3:
+    basestring = str
 
 class YamlLoader(yaml.Loader):
 
@@ -41,7 +52,7 @@ class YamlLoader(yaml.Loader):
     https://gist.github.com/joshbode/569627ced3076931b02f
     """
 
-    def __init__(self, stream):
+    def __init__(self, stream, version):
         """Initialise Loader."""
 
         try:
@@ -49,7 +60,7 @@ class YamlLoader(yaml.Loader):
         except AttributeError:
             self._root = os.path.curdir
 
-        yaml.Loader.__init__(self, stream)
+        yaml.Loader.__init__(self, stream, version)
 
     def construct_include(self, node):
         """Include file referenced at node."""
@@ -203,7 +214,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         velocities = kwargs.pop('velocities', getattr(pdb, 'velocities', None))
 
         if not forcefields:
-            forcefields = ommprotocol.FORCEFIELDS
+            forcefields = FORCEFIELDS
             print('INFO: Forcefields for PDB not specified. Using default:\n ',
                   ', '.join(forcefields))
         pdb.forcefield = ForceField(*process_forcefield(*forcefields))
@@ -567,15 +578,41 @@ class ProgressBarReporter(object):
         # remove microseconds to have cleaner output
         remaining = timedelta(days=delta.days, seconds=delta.seconds)
         percentage = 100.0*steps/self.total_steps
-        
-        template = '{}{}/{} steps ({:.1f}%) - {} left @ {:.1f} ns/day                        \r'
+        if ns_day:
+            template = '{}{}/{} steps ({:.1f}%) - {} left @ {:.1f} ns/day                    \r'
+        else:
+            template = '{}{}/{} steps ({:.1f}%)                                              \r'
         report = template.format(margin, steps, self.total_steps, percentage, remaining, ns_day)
         self._out.write(report)
+        if hasattr(self._out, 'flush'):
+            self._out.flush()
 
     def __del__(self):
         self._out.write('\n')
         if self._own_handle:
             self._out.close()
+
+class SegmentedDCDReporter(DCDReporter):
+
+    """
+    A DCD reporter based on mdtraj's that creates a new file every n `new_every`
+    """
+
+    def __init__(self, file, reportInterval, atomSubset=None, new_every=None):
+        self._original_filename = file if isinstance(file, basestring) else None
+        self.new_every = new_every
+        super(SegmentedDCDReporter, self).__init__(file, reportInterval, atomSubset=atomSubset)
+
+    def report(self, simulation, state):
+        if self.new_every is not None:
+            self._check_size(simulation.currentStep)
+        super(SegmentedDCDReporter, self).report(simulation, state)
+
+    def _check_size(self, current_step):
+        if current_step and not current_step % self.new_every and self._original_filename:
+            path, ext = os.path.splitext(self._original_filename)
+            filename = '{}.{}{}'.format(path, current_step, ext)
+            self._traj_file = self.backend(filename, 'w')
 
 
 ###########################
@@ -677,3 +714,17 @@ def process_forcefield(*forcefields):
             yield create_ffxml_file(forcefield)
         else:
             yield forcefield
+
+###########################
+# Defaults
+###########################
+
+REPORTERS = {
+    'PDB': PDBReporter,
+    'DCD': SegmentedDCDReporter,
+    'CHK': app.CheckpointReporter,
+    'HDF5':  HDF5Reporter,
+    'NETCDF': NetCDFReporter,
+    'MDCRD': MdcrdReporter,
+    'RS': partial(RestartReporter, write_multiple=True, netcdf=True),
+}
