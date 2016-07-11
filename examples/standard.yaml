@@ -1,0 +1,103 @@
+# Standard protocol
+
+# input
+topology: sys.prmtop
+positions: sys.crd
+# velocities: blablabla.vel
+# box: blablabla.xsc
+# forcefield: amber99sbildn, tip3p # only for PDB
+# charmm_parameters: something.par, something.str # only for PSF
+# checkpoint: blablabla.state.xml
+
+# output
+project_name: sys
+outputpath: output
+report: True
+report_every: 1000
+trajectory: DCD
+trajectory_every: 2000
+trajectory_new_every: 1e6
+restart: rs
+restart_every: 1e6
+save_state_at_end: True
+
+# # hardware
+# platform: CUDA
+# precision: mixed
+
+# conditions
+integrator: LangevinIntegrator
+temperature: 300
+friction: 0.1
+timestep: 1.0
+barostat: True
+pressure: 1.01325
+barostat_every: 100
+minimization_max_iterations: 1000
+
+# OpenMM system options
+nonbondedMethod: PME
+nonbondedCutoff: 1.0 # nm
+ewaldErrorTolerance: 0.0005
+constraints: HBonds
+rigidWater: True
+
+stages:
+    -   name: eq1_protein
+        temperature: 300
+        constrained_atoms: protein
+        minimize: True
+        steps: 100000
+        trajectory: DCD
+        trajectory_every: 1000
+
+    -   name: eq1_backbone
+        temperature: 300
+        constrained_atoms: backbone
+        minimize: True
+        steps: 0
+
+    -   name: eq1_released
+        temperature: 300
+        minimize: True
+        steps: 0
+
+    -   name: eq2_preannealing
+        temperature: 100
+        barostat: None
+        constrained_atoms: backbone
+        minimize: False
+        steps: 100000
+        trajectory: DCD
+        trajectory_every: 1000
+
+    -   name: eq3_annealing_100K
+        temperature: 100
+        constrained_atoms: backbone
+        minimize: False
+        steps: 100000
+        trajectory: DCD
+        trajectory_every: 1000
+
+    -   name: eq3_annealing_200K
+        temperature: 200
+        constrained_atoms: backbone
+        minimize: False
+        steps: 100000
+        trajectory: DCD
+        trajectory_every: 1000
+
+    -   name: eq3_annealing_300K
+        temperature: 300
+        constrained_atoms: backbone
+        minimize: False
+        steps: 100000
+        trajectory: DCD
+        trajectory_every: 1000
+
+    -   name: production
+        temperature: 300
+        minimize: False
+        steps: 25e6
+        trajectory: DCD
+        trajectory_every: 2000

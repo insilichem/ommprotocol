@@ -1,0 +1,50 @@
+# Standard protocol for implicit solvent
+
+# input
+topology: example.pdb
+# positions: sys.crd
+# velocities: blablabla.vel
+# box: blablabla.xsc
+forcefield: amber99sbildn, amber99_obc # only for PDB
+# charmm_parameters: something.par, something.str # only for PSF
+# checkpoint: blablabla.state.xml
+
+# output
+project_name: sys
+outputpath: output
+report: True
+report_every: 1000
+trajectory: DCD
+trajectory_every: 2000
+trajectory_new_every: 1e6
+restart: rs
+restart_every: 1e6
+save_state_at_end: True
+
+# # hardware
+# platform: CUDA
+# precision: mixed
+
+# conditions
+integrator: LangevinIntegrator
+temperature: 300
+friction: 0.1
+timestep: 1.0
+barostat: False
+pressure: 1.01325
+barostat_every: 100
+minimization_max_iterations: 1000
+
+# OpenMM system options
+nonbondedMethod: CutoffNonPeriodic
+nonbondedCutoff: 1.0 # nm
+constraints: HBonds
+rigidWater: True
+
+stages:
+    -   name: implicit
+        temperature: 300 # K
+        minimize: True
+        md_steps: 250e6
+        trajectory: DCD
+        trajectory_step: 2000

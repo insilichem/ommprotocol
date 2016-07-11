@@ -21,7 +21,7 @@ setup(
     description='Easy to deploy MD protocols for OpenMM',
     long_description=read('README.md'),
     packages=['ommprotocol'],
-    package_data={'': ['data/*.yaml']},
+    package_data={'': ['../examples/*.yaml']},
     platforms='any',
     classifiers=[
         'Programming Language :: Python',

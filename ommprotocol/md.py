@@ -108,7 +108,7 @@ class Stage(object):
     positions : simtk.Quantity, optional
         The starting coordinates of this stage. Only needed if
         handler is a PRMTOP file.
-    md_steps : int, optional
+    steps : int, optional
         Number of MD steps to simulate. If 0, no MD will take place
     timestep : float, optional
         Integration timestep, in fs. Defaults to 1.0.

@@ -1,1 +1,1 @@
-include MANIFEST.in README.md LICENSE ommprotocol/data/*.yaml
+include MANIFEST.in README.md LICENSE examples/*.yaml
