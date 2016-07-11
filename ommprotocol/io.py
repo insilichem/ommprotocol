@@ -598,13 +598,13 @@ class SegmentedDCDReporter(DCDReporter):
     A DCD reporter based on mdtraj's that creates a new file every n `new_every`
     """
 
-    def __init__(self, file, reportInterval, atomSubset=None, new_every=None):
+    def __init__(self, file, reportInterval, atomSubset=None, new_every=0):
         self._original_filename = file if isinstance(file, basestring) else None
         self.new_every = new_every
         super(SegmentedDCDReporter, self).__init__(file, reportInterval, atomSubset=atomSubset)
 
     def report(self, simulation, state):
-        if self.new_every is not None:
+        if self.new_every > 0:
             self._check_size(simulation.currentStep)
         super(SegmentedDCDReporter, self).report(simulation, state)
 
