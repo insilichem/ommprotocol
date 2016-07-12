@@ -1,17 +1,27 @@
 ommprotocol
 ===========
 
-Easy to deploy MD protocols for OpenMM
+Easy to deploy MD protocols for OpenMM!
 
-By Jaime Rodríguez-Guerra ([@jaimergp](https://github.com/jaimergp))
+*By Jaime Rodríguez-Guerra ([@jaimergp](https://github.com/jaimergp)). Contributors: Lur Alonso*
 
-Contributors: Lur Alonso
+### Some cool features
+
+- No coding required - just a YAML input file!
+- Smart support for different input file formats:
+    * __Topology__: PDB, Amber's PRMTOP, Charmm's PSF
+    * __Positions__: PDB, COOR, INPCRD
+    * __Velocities__: PDB, VEL
+    * __Box vectors__: PDB, XSC, CSV
+- Choose your preferred **trajectory** format (PDB, DCD, HDF5, NETCDF, MDCRD) and **checkpoints** (Amber restart, OpenMM XML states, restart).
+- Live report of simulation progress, with estimated ETA and speed.
+- Checkpoint every n steps. Also, emergency rescue files are created if an error occurs. 
+- Autochunk the trajectories for easy handling.
 
 Installation
 ------------
-Really easy with Conda. If you don't know what Conda is, check [its webpage](http://conda.pydata.org/docs/). Quick steps:
 
-1. Download and install Miniconda.
+1. Download and install [Miniconda](http://conda.pydata.org/miniconda.html), a tiny Python distribution with a cool package manager and installer. Check [its webpage](http://conda.pydata.org/docs/) for more info.
 
         wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
         bash Miniconda3*.sh
@@ -21,15 +31,16 @@ Really easy with Conda. If you don't know what Conda is, check [its webpage](htt
         conda config --add channels omnia
         conda config --add channels insilichem
 
-3. Install ommprotocol in an environment called `openmm`:
+3. Install `ommprotocol`:
+    
+        conda install ommprotocol
+
+    Optionally, you can use a separate environment called `openmm`, and then activate it when required.
 
         conda create -n openmm ommprotocol
+        source activate openmm
 
-4. Activate the environment
-
-        source activate ommprotocol
-
-5. Test
+4. If everything is OK, this sould run correctly.
 
         ommprotocol -h
 
@@ -40,9 +51,12 @@ Quick launch:
 
     ommprotocol <inputfile.yaml>
 
-All input configuration is done through YAML files. Some examples are included in `examples` folder; parameters should be self-explaining.
+All input configuration is done through YAML files. A couple of sample inputs are included in `examples` folder; parameters should be self-explaining.
 
-There's two main parts in these files: the global parameters, which are common for all stages, and the `stages` section, which lists all the stages to be simulated in the requested order. Each stage can override one or more global parameter, if needed.
+There's two main parts in these files: 
+
+* Top-level parameters: listed in next section, they are common for all stages
+* `stages`: Contains a list with all the stages to be simulated in the requested order. Each stage can override one or more global parameter(s), if needed.
 
 
 Available parameters
@@ -99,3 +113,7 @@ The following keys are available for the input file. They are listed in differen
 
 ### Stage-only parameters
 - `name`: A name for this stage. 
+
+## Get help
+
+If you have problems running `ommprotocol`, feel free to [create an issue](https://github.com/insilichem/ommprotocol/issues)! Also, make sure to visit our main webpage at [www.insilichem.com](www.insilichem.com).
