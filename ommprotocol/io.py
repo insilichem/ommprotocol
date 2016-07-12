@@ -40,7 +40,6 @@ from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
 from mdtraj.reporters import HDF5Reporter
 # Own
 from .utils import sanitize_path_for_file
-from .md import NONBONDEDMETHODS, CONSTRAINTS, FORCEFIELDS
 
 if sys.version_info.major == 3:
     basestring = str
@@ -214,6 +213,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         velocities = kwargs.pop('velocities', getattr(pdb, 'velocities', None))
 
         if not forcefields:
+            from .md import FORCEFIELDS
             forcefields = FORCEFIELDS
             print('INFO: Forcefields for PDB not specified. Using default:\n ',
                   ', '.join(forcefields))
@@ -680,6 +680,7 @@ def prepare_system_options(cfg, fill_not_found=True):
     """
     Retrieve and delete (pop) system options from input configuration.
     """
+    from .md import NONBONDEDMETHODS, CONSTRAINTS
     d = {}
     if fill_not_found:
         d['nonbondedMethod'] = NONBONDEDMETHODS.get(cfg.pop('nonbondedMethod', None))

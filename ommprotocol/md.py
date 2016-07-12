@@ -8,7 +8,7 @@
 #################################################
 
 # Stdlib
-from __future__ import print_function, division, absolute_import
+from __future__ import print_function, division
 import os
 import sys
 from contextlib import contextmanager
@@ -17,7 +17,7 @@ from simtk import unit as u
 from simtk import openmm as mm
 from simtk.openmm import app
 # Own
-from . import io
+from .io import REPORTERS, ProgressBarReporter, prepare_system_options
 from .utils import random_string, assert_not_exists
 
 ###########################
@@ -82,7 +82,7 @@ def protocol(handler, cfg):
     for stage_options in cfg['stages']:
         options = DEFAULT_OPTIONS.copy()
         options.update(cfg)
-        stage_system_options = io.prepare_system_options(stage_options, fill_not_found=False)
+        stage_system_options = prepare_system_options(stage_options, fill_not_found=False)
         options.update(stage_options)
         options['system_options'].update(stage_system_options)
         stage = Stage(handler, positions=pos, velocities=vel, box=box,
@@ -409,7 +409,7 @@ class Stage(object):
 
     def reporter(self, name):
         try:
-            return io.REPORTERS[name.upper()]
+            return REPORTERS[name.upper()]
         except KeyError:
             raise NotImplementedError('Reporter {} not found'.format(name))
 
@@ -435,7 +435,7 @@ class Stage(object):
     @property
     def progress_reporter(self):
         if self._progress_reporter is None:
-            rep = io.ProgressBarReporter(sys.stdout, self.report_every, total_steps=self.steps)
+            rep = ProgressBarReporter(sys.stdout, self.report_every, total_steps=self.steps)
             self._progress_reporter = rep
         return self._progress_reporter
 

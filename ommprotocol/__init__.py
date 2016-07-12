@@ -7,6 +7,8 @@
 # By Jaime RGP <jaime@insilichem.com> @ 2016    #
 #################################################
 
+import io
+import md
 from ommprotocol.io import prepare_input
 from ommprotocol.md import protocol
 
