@@ -10,6 +10,9 @@
 import sys as _sys
 from ommprotocol.io import prepare_input, statexml2pdb
 from ommprotocol.md import protocol
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 
 def run_protocol():
     handler, cfg = prepare_input()
@@ -23,3 +26,5 @@ def state_to_pdb():
 
 if __name__ == '__main__':
     run_protocol()
+
+

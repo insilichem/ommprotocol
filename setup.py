@@ -3,8 +3,9 @@
 
 from setuptools import setup
 import os
+import versioneer
 
-VERSION = "0.1.3"
+VERSION = versioneer.get_version()
 
 
 def read(fname):
@@ -13,6 +14,7 @@ def read(fname):
 setup(
     name='ommprotocol',
     version=VERSION,
+    cmdclass=versioneer.get_cmdclass(),
     url='https://github.com/insilichem/ommprotocol',
     download_url='https://github.com/insilichem/ommprotocol/tarball/v' + VERSION,
     license='LGPL',
