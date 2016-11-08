@@ -79,14 +79,15 @@ def protocol(handler, cfg):
         raise ValueError('Protocol must include stages of simulation')
 
     pos, vel, box = handler.positions, handler.velocities, handler.box
-    for stage_options in cfg['stages']:
+    stages = cfg.pop('stages')
+    for stage_options in stages:
         options = DEFAULT_OPTIONS.copy()
         options.update(cfg)
         stage_system_options = prepare_system_options(stage_options, fill_not_found=False)
         options.update(stage_options)
         options['system_options'].update(stage_system_options)
         stage = Stage(handler, positions=pos, velocities=vel, box=box,
-                      total_stages=len(cfg['stages']), **options)
+                      total_stages=len(stages), **options)
         pos, vel, box = stage.run()
         del stage
 
