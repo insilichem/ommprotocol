@@ -308,6 +308,14 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             system.setDefaultPeriodicBoxVectors(*self.box)
         return system
 
+    def write_pdb(self, path):
+        """
+        Outputs a PDB file with the current contents of the system
+        """
+        if self.master is None and self.positions is None:
+            raise ValueError('Topology and positions are needed to write output files.')
+        with open(path, 'w') as f:
+            PDBFile.writeFile(self.topology, self.positions, f)
 
 class Positions(MultiFormatLoader):
 
@@ -714,6 +722,18 @@ def process_forcefield(*forcefields):
             yield create_ffxml_file(forcefield)
         else:
             yield forcefield
+
+def statexml2pdb(topology, state, output=None):
+    """
+    Given an OpenMM xml file containing the state of the simulation,
+    generate a PDB snapshot for easy visualization
+    """
+    state = Restart.from_xml(state)
+    system = SystemHandler.load(topology, positions=state.positions)
+    if output is None:
+        output = topology + '.pdb'
+    system.write_pdb(output)
+
 
 ###########################
 # Defaults

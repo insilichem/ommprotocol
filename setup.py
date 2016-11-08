@@ -4,7 +4,7 @@
 from setuptools import setup
 import os
 
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 
 
 def read(fname):
@@ -36,5 +36,6 @@ setup(
     entry_points='''
         [console_scripts]
         ommprotocol=ommprotocol:run_protocol
+        state2pdb=ommprotocol:state_to_pdb
     ''',
 )
