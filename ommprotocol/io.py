@@ -656,24 +656,25 @@ def prepare_handler(cfg):
     Load all files into single object.
     """
     positions, velocities, boxvectors = None, None, None
-
+    _path = cfg['_path']
+    
     if 'checkpoint' in cfg:
-        restart_path = sanitize_path_for_file(cfg['checkpoint'], cfg['_path'])
+        restart_path = sanitize_path_for_file(cfg['checkpoint'], _path)
         restart = Restart.load(restart_path)
         positions = restart.positions
         velocities = restart.velocities
         boxvectors = restart.box
 
     if 'positions' in cfg:
-        positions_path = sanitize_path_for_file(cfg.pop('positions'), cfg['_path'])
+        positions_path = sanitize_path_for_file(cfg.pop('positions'), _path)
         positions = Positions.load(positions_path)
 
     if 'velocities' in cfg:
-        velocities_path = sanitize_path_for_file(cfg.pop('velocities'), cfg['_path'])
+        velocities_path = sanitize_path_for_file(cfg.pop('velocities'), _path)
         velocities = Velocities.load(velocities_path)
 
     if 'box' in cfg:
-        boxvectors_path = sanitize_path_for_file(cfg.pop('box', None), cfg['_path'])
+        boxvectors_path = sanitize_path_for_file(cfg.pop('box'), _path)
         boxvectors = BoxVectors.load(boxvectors_path)
 
     return SystemHandler.load(cfg.pop('topology'), positions=positions, velocities=velocities,
