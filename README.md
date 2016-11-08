@@ -85,13 +85,13 @@ The following keys are available for the input file. They are listed in differen
 - `save_state_at_end`: Whether to save the state of the simulation at the end of every stage.
 
 ### General conditions of simulation
-- `minimize`: If *True*, minimize before MD.
+- `minimization`: If *True*, minimize before MD.
 - `steps`: Number of MD steps to simulate. If 0, no MD will take place.
 - `timestep`: Integration timestep, in fs. Defaults to 1.0.
 - `temperature`: In Kelvin.
 - `barostat`: *True* for NPT, *False* for NVT.
 - `pressure`: In bar. Only used if barostat is *True*.
-- `barostat_every`: Update interval of barostat, in steps.
+- `barostat_interval`: Update interval of barostat, in steps.
 - `restrained_atoms`, `constrained_atoms`: Parts of the system that should remain restrained (a force is applied to minimize movement) or constrained (no movement at all) during the simulation. Available values: *all*, *protein*, *protein_no_H*, *backbone*, *calpha*. If *null*, no atoms will be fixed.
 - `restraint_strength`: If restraints are in use, the strength of the applied force in kJ/mol. Defaults to 5.0.
 - `integrator`: Which integrator should be used. Langevin by default.

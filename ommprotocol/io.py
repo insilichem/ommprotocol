@@ -189,7 +189,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                 'psf': cls.from_psf}[ext]
 
     @classmethod
-    def from_pdb(cls, path, forcefields=None, **kwargs):
+    def from_pdb(cls, path, forcefield=None, **kwargs):
         """
         Loads topology, positions and, potentially, velocities and vectors,
         from a PDB file
@@ -212,12 +212,11 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         positions = kwargs.pop('positions', pdb.positions)
         velocities = kwargs.pop('velocities', getattr(pdb, 'velocities', None))
 
-        if not forcefields:
-            from .md import FORCEFIELDS
-            forcefields = FORCEFIELDS
+        if not forcefield:
+            from .md import FORCEFIELDS as forcefield
             print('INFO: Forcefields for PDB not specified. Using default:\n ',
-                  ', '.join(forcefields))
-        pdb.forcefield = ForceField(*process_forcefield(*forcefields))
+                  ', '.join(forcefield))
+        pdb.forcefield = ForceField(*list(process_forcefield(*forcefield)))
 
         return cls(master=pdb, topology=pdb.topology, positions=positions,
                    velocities=velocities, box=box, path=path, **kwargs)

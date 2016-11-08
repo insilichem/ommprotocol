@@ -125,7 +125,7 @@ class Stage(object):
         Parts of the system that should remain restrained or constrained
         during the stage. Available values in SELECTORS dict.
         If None, no atoms will be fixed.
-    minimize : bool, optional
+    minimization : bool, optional
         If True, minimize before MD
     minimization_tolerance : float, optional, default=10 kJ/mol
         Threshold value minimization should converge to
@@ -193,6 +193,10 @@ class Stage(object):
                  minimization_tolerance=10, minimization_max_iterations=10000,
                  save_state_at_end=True, total_stages=None, verbose=True,
                  **kwargs):
+        for k in kwargs:
+            if not k.startswith('_'):
+                print('Option {} not recognized!'.format(k))
+
         # System properties
         self.handler = handler
         self.positions = positions
@@ -579,7 +583,7 @@ class Stage(object):
                 print('Saving state...', end=' ', flush=True)
             try:
                 self.backup_simulation()
-            except:
+            except Exception:
                 if verbose:
                     print('FAILED :(')
             else:

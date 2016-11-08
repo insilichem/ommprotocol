@@ -5,8 +5,8 @@ topology: example.pdb
 # positions: sys.crd
 # velocities: blablabla.vel
 # box: blablabla.xsc
-forcefield: amber99sbildn, amber99_obc # only for PDB
-# charmm_parameters: something.par, something.str # only for PSF
+forcefield: [amber99sbildn, amber99_obc] # only for PDB
+# charmm_parameters: [something.par, something.str] # only for PSF
 # checkpoint: blablabla.state.xml
 
 # output
@@ -32,7 +32,7 @@ friction: 0.1
 timestep: 1.0
 barostat: False
 pressure: 1.01325
-barostat_every: 100
+barostat_interval: 100
 minimization_max_iterations: 1000
 
 # OpenMM system options
@@ -44,7 +44,7 @@ rigidWater: True
 stages:
     -   name: implicit
         temperature: 300 # K
-        minimize: True
+        minimization: True
         md_steps: 250e6
         trajectory: DCD
         trajectory_step: 2000
