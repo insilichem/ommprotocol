@@ -22,10 +22,7 @@ from argparse import ArgumentParser
 from datetime import datetime, timedelta
 from functools import partial
 # OpenMM and 3rd party helpers
-try:
-    import ruamel_yaml as yaml
-except ImportError:
-    import yaml
+import ruamel_yaml as yaml
 from simtk import unit as u
 from simtk.openmm.app import (PDBFile, ForceField, AmberPrmtopFile, PDBReporter,
                               AmberInpcrdFile, CharmmPsfFile, CharmmParameterSet)
@@ -51,7 +48,7 @@ class YamlLoader(yaml.Loader):
     https://gist.github.com/joshbode/569627ced3076931b02f
     """
 
-    def __init__(self, stream, version):
+    def __init__(self, stream, version=None, **kwargs):
         """Initialise Loader."""
 
         try:
@@ -59,7 +56,7 @@ class YamlLoader(yaml.Loader):
         except AttributeError:
             self._root = os.path.curdir
 
-        yaml.Loader.__init__(self, stream, version)
+        yaml.Loader.__init__(self, stream, version=None, **kwargs)
 
     def construct_include(self, node):
         """Include file referenced at node."""
@@ -70,7 +67,7 @@ class YamlLoader(yaml.Loader):
 
         with open(filename, 'r') as f:
             if extension in ('yaml', 'yml'):
-                return yaml.load(f, self)
+                return yaml.load(f, Loader=self)
             else:
                 return ''.join(f.readlines())
 
@@ -634,11 +631,12 @@ def prepare_input(argv=None):
                        'easy to deploy MD protocols for OpenMM')
     p.add_argument('input', metavar='INPUT FILE', type=str,
                    help='YAML input file')
+    p.add_argument('--version', action='version', version='%(prog)s' + ' v0.1.2')
     args = p.parse_args(argv if argv else sys.argv[1:])
 
     # Load config file
     with open(args.input) as f:
-        cfg = yaml.load(f, YamlLoader)
+        cfg = yaml.load(f, Loader=YamlLoader)
     # Paths and dirs
     cfg['_path'] = os.path.abspath(args.input)
     cfg['system_options'] = prepare_system_options(cfg)
