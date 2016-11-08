@@ -37,6 +37,9 @@ from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
 from mdtraj.reporters import HDF5Reporter
 # Own
 from .utils import sanitize_path_for_file
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 
 if sys.version_info.major == 3:
     basestring = str
@@ -631,7 +634,7 @@ def prepare_input(argv=None):
                        'easy to deploy MD protocols for OpenMM')
     p.add_argument('input', metavar='INPUT FILE', type=str,
                    help='YAML input file')
-    p.add_argument('--version', action='version', version='%(prog)s' + ' v0.1.2')
+    p.add_argument('--version', action='version', version='%(prog)s v{}'.format(__version__))
     args = p.parse_args(argv if argv else sys.argv[1:])
 
     # Load config file
