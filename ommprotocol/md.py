@@ -18,7 +18,7 @@ from simtk import openmm as mm
 from simtk.openmm import app
 # Own
 from .io import REPORTERS, ProgressBarReporter, prepare_system_options
-from .utils import random_string, assert_not_exists
+from .utils import random_string, assert_not_exists, timed_input
 
 ###########################
 # Defaults
@@ -574,7 +574,7 @@ class Stage(object):
         except (KeyboardInterrupt, Exception) as ex:
             if isinstance(ex, KeyboardInterrupt):
                 reraise = False
-                answer = input('\n\nDo you want to save current state? (y/N): ')
+                answer = timed_input('\n\nDo you want to save current state? (y/N): ')
                 if answer not in ('Y', 'y', 'yes', 'YES'):
                     if verbose:
                         sys.exit('Ok, bye!')

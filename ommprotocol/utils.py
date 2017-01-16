@@ -14,6 +14,9 @@ Collection of miscelaneous functions
 import os
 import random
 import string
+import thread
+import threading
+
 
 def assert_not_exists(path, sep='.'):
     """
@@ -57,3 +60,16 @@ def sanitize_path_for_file(path, config_file):
     basepath = os.path.dirname(config_file)
     path = os.path.expanduser(path)
     return os.path.join(basepath, path)
+
+
+def timed_input(prompt, timeout=300.0):
+    print(prompt, end='')
+    timer = threading.Timer(timeout, thread.interrupt_main)
+    astring = None
+    try:
+        timer.start()
+        astring = input(prompt)
+    except KeyboardInterrupt:
+        pass
+    timer.cancel()
+    return astring
