@@ -16,6 +16,7 @@ Handle IO stuff
 # Python stdlib
 from __future__ import print_function, division, absolute_import
 import os
+import pickle
 import sys
 from collections import namedtuple
 from argparse import ArgumentParser
@@ -178,7 +179,8 @@ class SystemHandler(MultiFormatLoader, InputContainer):
     Parameters
     ----------
     path : str
-        Path to desired topology file. Supports pdb, prmtop, psf.
+        Path to desired topology file. Supports pdb, prmtop, psf, 
+        pickled OpenMM Topology objects.
     """
 
     @classmethod
@@ -186,7 +188,10 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         return {'pdb': cls.from_pdb,
                 'prmtop': cls.from_prmtop,
                 'top': cls.from_prmtop,
-                'psf': cls.from_psf}[ext]
+                'psf': cls.from_psf,
+                'pickle': cls.from_pickle,
+                'pickle2': cls.from_pickle,
+                'pickle3': cls.from_pickle}[ext]
 
     @classmethod
     def from_pdb(cls, path, forcefield=None, **kwargs):
@@ -272,6 +277,43 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         psf.loadParameters(psf.parmset)
         return cls(master=psf, topology=psf.topology, positions=positions, path=path,
                    **kwargs)
+
+    @classmethod
+    def from_pickle(cls, path, positions=None, forcefield=None, **kwargs):
+        if positions is None:
+            raise ValueError('Pickled topology files require initial positions.')
+        if forcefield is None:
+            raise ValueError('Pickled topology files require XML/FRCMOD forcefields.')
+
+        topology = cls._pickle_load(path)
+        forcefield = ForceField(*list(process_forcefield(*forcefield)))
+        return cls(master=forcefield, topology=topology, positions=positions, path=path,
+                   **kwargs)
+
+    @staticmethod
+    def _pickle_load(path):
+        """
+        Loads pickled topology. Careful with Python versions though!
+        """
+        _, ext = os.path.splitext(path)
+        topology = None
+        if sys.version_info.major == 2:
+            if ext == '.pickle2':
+                with open(path, 'rb') as f:
+                    topology = pickle.load(f)
+            elif ext in ('.pickle3', '.pickle'):
+                with open(path, 'rb') as f:
+                    topology = pickle.load(f, protocol=3)
+        elif sys.version_info.major == 3:
+            if ext == '.pickle2':
+                with open(path, 'rb') as f:
+                    topology = pickle.load(f)
+            elif ext in ('.pickle3', '.pickle'):
+                with open(path, 'rb') as f:
+                    topology = pickle.load(f)
+        if topology is None:
+            raise ValueError('File {} is not compatible with this version'.format(path))
+        return topology
 
     def __init__(self, master=None, **kwargs):
         InputContainer.__init__(self, **kwargs)
