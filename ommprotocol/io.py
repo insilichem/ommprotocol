@@ -227,7 +227,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                   ', '.join(forcefield))
         pdb.forcefield = ForceField(*list(process_forcefield(*forcefield)))
 
-        return cls(master=pdb, topology=pdb.topology, positions=positions,
+        return cls(master=pdb.forcefield, topology=pdb.topology, positions=positions,
                    velocities=velocities, box=box, path=path, **kwargs)
 
     @classmethod
@@ -334,19 +334,17 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         if self.master is None:
             raise ValueError('This instance is not able to create systems.')
 
-        if isinstance(self.master, PDBFile):
-            if not hasattr(self.master, 'forcefield'):
-                raise ValueError('PDB topology files must be instanciated with forcefield paths.')
-            system = self.master.forcefield.createSystem(self.topology, **system_options)
+        if isinstance(self.master, ForceField):
+            system = self.master.createSystem(self.topology, **system_options)
 
         elif isinstance(self.master, AmberPrmtopFile):
             system = self.master.createSystem(**system_options)
 
         elif isinstance(self.master, CharmmPsfFile):
             if not hasattr(self.master, 'parmset'):
-                raise ValueError('PSF topology files must be instanciated with Charmm parameters.')
+                raise ValueError('PSF topology files must be instantiated with Charmm parameters.')
             system = self.master.createSystem(self.master.parmset, **system_options)
-        
+
         else:
             raise NotImplementedError('This handler is not able to create systems.')
 
