@@ -581,7 +581,7 @@ class Stage(object):
                 reraise = True
                 print('\n\nAn error occurred: {}'.format(ex))
             if verbose:
-                print('Saving state...', end=' ', flush=True)
+                print('Saving state...')
             try:
                 self.backup_simulation()
             except Exception:
