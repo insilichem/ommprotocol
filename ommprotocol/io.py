@@ -768,9 +768,11 @@ def process_forcefield(*forcefields):
     """
     for forcefield in forcefields:
         if forcefield.endswith('.frcmod'):
-            yield create_ffxml_file(forcefield)
+            gaffmol2 = os.path.splitext(forcefield)[0] + '.gaff.mol2'
+            yield create_ffxml_file([gaffmol2], [forcefield])
         else:
             yield forcefield
+
 
 def statexml2pdb(topology, state, output=None):
     """
