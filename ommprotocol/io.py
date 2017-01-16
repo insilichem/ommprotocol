@@ -23,7 +23,10 @@ from argparse import ArgumentParser
 from datetime import datetime, timedelta
 from functools import partial
 # OpenMM and 3rd party helpers
-import ruamel_yaml as yaml
+try:
+    import ruamel_yaml as yaml
+except ImportError:
+    from ruamel import yaml
 from simtk import unit as u
 from simtk.openmm.app import (PDBFile, ForceField, AmberPrmtopFile, PDBReporter,
                               AmberInpcrdFile, CharmmPsfFile, CharmmParameterSet)
