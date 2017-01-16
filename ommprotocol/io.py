@@ -48,6 +48,7 @@ del get_versions
 if sys.version_info.major == 3:
     basestring = str
 
+
 class YamlLoader(yaml.Loader):
 
     """
@@ -362,6 +363,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         with open(path, 'w') as f:
             PDBFile.writeFile(self.topology, self.positions, f)
 
+
 class Positions(MultiFormatLoader):
 
     """
@@ -470,7 +472,7 @@ class BoxVectors(MultiFormatLoader):
             return NamedXsc(*map(float, lines[2].split()))
 
         xsc = parse(path)
-        return u.Quantity([[xsc.a_x, xsc.a_y, xsc.a_z], 
+        return u.Quantity([[xsc.a_x, xsc.a_y, xsc.a_z],
                            [xsc.b_x, xsc.b_y, xsc.b_z],
                            [xsc.c_x, xsc.c_y, xsc.c_z]], unit=u.angstroms)
 
@@ -496,11 +498,11 @@ class BoxVectors(MultiFormatLoader):
         with open(path) as f:
             fields = map(float, next(f).split(','))
         if len(fields) == 3:
-            return u.Quantity([[fields[0], 0, 0], 
+            return u.Quantity([[fields[0], 0, 0],
                                [0, fields[1], 0],
                                [0, 0, fields[2]]], unit=u.nanometers)
         if len(fields) == 9:
-            return u.Quantity([fields[0:3], 
+            return u.Quantity([fields[0:3],
                                fields[3:6],
                                fields[6:9]], unit=u.nanometers)
 
@@ -556,9 +558,11 @@ class Restart(MultiFormatLoader, InputContainer):
 
 
 class ProgressBarReporter(object):
+
     """
     A simple progress bar reporter for stdout.
     """
+
     def __init__(self, file, interval, total_steps=None, margin=4):
         """Create a ProgressBarReporter.
 
@@ -582,7 +586,6 @@ class ProgressBarReporter(object):
         self.margin = margin
         self.total_steps = total_steps
         self._initialized = False
-        
 
     def describeNextReport(self, simulation):
         """Get information about the next report this object will generate.
@@ -600,7 +603,7 @@ class ProgressBarReporter(object):
             that report will require positions, velocities, forces, and
             energies respectively.
         """
-        steps = self.interval - simulation.currentStep%self.interval
+        steps = self.interval - simulation.currentStep % self.interval
         return (steps, False, False, False, False)
 
     def report(self, simulation, state):
@@ -614,7 +617,7 @@ class ProgressBarReporter(object):
             The current state of the simulation
         """
         if not self._initialized:
-            self._initial_clock_time  = datetime.now()
+            self._initial_clock_time = datetime.now()
             self._initial_simulation_time = state.getTime()
             self._initial_steps = simulation.currentStep
             self._initialized = True
@@ -643,6 +646,7 @@ class ProgressBarReporter(object):
         self._out.write('\n')
         if self._own_handle:
             self._out.close()
+
 
 class SegmentedDCDReporter(DCDReporter):
 
@@ -689,7 +693,7 @@ def prepare_input(argv=None):
     cfg['_path'] = os.path.abspath(args.input)
     cfg['system_options'] = prepare_system_options(cfg)
     cfg['outputpath'] = sanitize_path_for_file(cfg.get('outputpath', '.'), args.input)
-    try: 
+    try:
         os.makedirs(cfg['outputpath'])
     except OSError:
         pass
@@ -705,7 +709,7 @@ def prepare_handler(cfg):
     """
     positions, velocities, boxvectors = None, None, None
     _path = cfg['_path']
-    
+
     if 'checkpoint' in cfg:
         restart_path = sanitize_path_for_file(cfg['checkpoint'], _path)
         restart = Restart.load(restart_path)

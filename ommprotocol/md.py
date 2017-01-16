@@ -62,6 +62,7 @@ DEFAULT_OPTIONS = {
     'system_options': SYSTEM_OPTIONS
 }
 
+
 def protocol(handler, cfg):
     """
     Run all the stages in protocol
@@ -186,8 +187,8 @@ class Stage(object):
                  steps=0, minimization=True, barostat=True, temperature=300,
                  timestep=1.0, pressure=1.01325, integrator='LangevinIntegrator',
                  barostat_interval=25, system_options=None, platform=None, precision=None,
-                 trajectory=None, trajectory_every=2000, outputpath='.', 
-                 trajectory_atom_subset=None, trajectory_new_every=0, 
+                 trajectory=None, trajectory_every=2000, outputpath='.',
+                 trajectory_atom_subset=None, trajectory_new_every=0,
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None, friction=1.0,

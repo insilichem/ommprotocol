@@ -39,6 +39,7 @@ def assert_not_exists(path, sep='.'):
         i += 1
     return path
 
+
 def assertinstance(obj, types):
     """
     Make sure object `obj` is of type `types`. Else, raise TypeError.
