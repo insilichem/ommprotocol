@@ -10,12 +10,20 @@
 """
 Collection of miscelaneous functions
 """
-
+from __future__ import print_function
 import os
 import random
 import string
-import thread
+import sys
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 import threading
+
+
+if sys.version_info.major == 3:
+    raw_input = input
 
 
 def assert_not_exists(path, sep='.'):
@@ -68,7 +76,7 @@ def timed_input(prompt, timeout=300.0):
     astring = None
     try:
         timer.start()
-        astring = input(prompt)
+        astring = raw_input(prompt)
     except KeyboardInterrupt:
         pass
     timer.cancel()
