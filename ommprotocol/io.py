@@ -35,7 +35,7 @@ from parmed.namd import NamdBinCoor, NamdBinVel
 from parmed import load_file as parmed_load_file
 from openmoltools.utils import create_ffxml_file
 from mdtraj.reporters import DCDReporter
-from mdtraj import load as mdtraj_load
+from mdtraj import load_frame as mdtraj_load_frame
 # 3rd party
 from simtk.openmm import app
 from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
@@ -791,8 +791,8 @@ def export_frame_coordinates(topology, trajectory, nframe, output=None):
     if output is None:
         basename, ext = os.path.splitext(trajectory)
         output = '{}.frame{}.crd'.format(basename, nframe)
-    traj = mdtraj_load(trajectory, top=topology)
-    traj[int(nframe)].save_netcdfrst(output)
+    traj = mdtraj_load_frame(trajectory, int(nframe), top=topology)
+    traj.save_netcdfrst(output)
 
 
 ###########################
