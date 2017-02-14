@@ -39,5 +39,6 @@ setup(
         [console_scripts]
         ommprotocol=ommprotocol:run_protocol
         state2pdb=ommprotocol:state_to_pdb
+        crdfromframe=ommprotocol:crd_from_frame
     ''',
 )
