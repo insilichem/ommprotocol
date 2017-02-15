@@ -790,9 +790,11 @@ def statexml2pdb(topology, state, output=None):
 def export_frame_coordinates(topology, trajectory, nframe, output=None):
     if output is None:
         basename, ext = os.path.splitext(trajectory)
-        output = '{}.frame{}.crd'.format(basename, nframe)
+        output = '{}.frame{}.inpcrd'.format(basename, nframe)
     traj = mdtraj_load_frame(trajectory, int(nframe), top=topology)
-    traj.save_netcdfrst(output)
+    xyz = traj.openmm_positions(0).value_in_unit(u.angstrom)
+    structure = parmed_load_file(topology, xyz=xyz, structure=True)
+    structure.save(output, overwrite=True)
 
 
 ###########################

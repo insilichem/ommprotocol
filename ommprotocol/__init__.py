@@ -27,11 +27,11 @@ def state_to_pdb():
         _sys.exit("StateXML2PDB usage: state2pdb <topology> <xmlstate> [<output.pdb>]")
 
 
-def crd_from_frame():
-    if len(_sys.argv) in (3, 4):
+def export_frame():
+    if len(_sys.argv) in (4, 5):
         export_frame_coordinates(*_sys.argv[1:])
     else:
-        _sys.exit("crdfromframe usage: crdfromframe <topology> <dcd> <nframe> [<output.crd>]")
+        _sys.exit("exportframe usage: crdfromframe <topology> <trajectory> <nframe> [<output.crd>]")
 
 
 if __name__ == '__main__':
