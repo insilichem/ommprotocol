@@ -810,18 +810,18 @@ def export_frame_coordinates(topology, trajectory, nframe, output=None):
         top = AmberPrmtopFile(topology)
         mdtop = mdtraj.Topology.from_openmm(top.topology)
         traj = mdtraj.load_frame(trajectory, int(nframe), top=mdtop)
-        structure = parmed.openmm.load_topology(
-            top.topology, system=top.createSystem())
-    else: # standard protocol (the topology is loaded twice, though)
+        structure = parmed.openmm.load_topology(top.topology, system=top.createSystem())
+        structure.box_vectors = top.topology.getPeriodicBoxVectors()
+
+    else:  # standard protocol (the topology is loaded twice, though)
         traj = mdtraj.load_frame(trajectory, int(nframe), top=topology)
         structure = parmed.load_file(topology)
     
-    xyz = traj.openmm_positions(0).value_in_unit(u.angstrom)
-    box_lengths = u.Quantity(traj.unitcell_lengths[0], unit=u.nanometers)
-    box = box_lengths.value_in_unit(u.angstrom).tolist() + traj.unitcell_angles[0].tolist()
-    
-    structure.box = box
-    structure.positions = xyz
+    structure.positions = traj.openmm_positions(0)
+
+    if traj.unitcell_vectors is not None:  # if frame provides box vectors, use those
+        structure.box_vectors = traj.openmm_boxes(0)
+
     structure.save(output, overwrite=True)
 
 
