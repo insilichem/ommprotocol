@@ -547,7 +547,7 @@ class Restart(MultiFormatLoader, InputContainer):
     @classmethod
     def from_rst(cls, path):
         positions, velocities, box = None, None, None
-        rst = parmed_load_file(path)
+        rst = parmed.load_file(path)
         positions = u.Quantity(rst.coordinates[0], unit=u.angstrom)
         if rst.hasvels:
             velocities = u.Quantity(rst.velocities[0], unit=u.angstrom/u.picosecond)
