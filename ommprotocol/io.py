@@ -29,17 +29,15 @@ except ImportError:
     from ruamel import yaml
 from simtk import unit as u
 from simtk.openmm.app import (PDBFile, ForceField, AmberPrmtopFile, PDBReporter,
-                              AmberInpcrdFile, CharmmPsfFile, CharmmParameterSet)
+                              AmberInpcrdFile, CharmmPsfFile, CharmmParameterSet,
+                              CheckpointReporter)
 from simtk.openmm import XmlSerializer
+import mdtraj
+from mdtraj.reporters import DCDReporter, HDF5Reporter
+import parmed
 from parmed.namd import NamdBinCoor, NamdBinVel
-from parmed import load_file as parmed_load_file
-from openmoltools.utils import create_ffxml_file
-from mdtraj.reporters import DCDReporter
-from mdtraj import load_frame as mdtraj_load_frame
-# 3rd party
-from simtk.openmm import app
 from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
-from mdtraj.reporters import HDF5Reporter
+from openmoltools.utils import create_ffxml_file
 # Own
 from .utils import sanitize_path_for_file
 from ._version import get_versions
@@ -791,9 +789,24 @@ def export_frame_coordinates(topology, trajectory, nframe, output=None):
     if output is None:
         basename, ext = os.path.splitext(trajectory)
         output = '{}.frame{}.inpcrd'.format(basename, nframe)
-    traj = mdtraj_load_frame(trajectory, int(nframe), top=topology)
+    
+    # ParmEd sometimes struggles with certain PRMTOP files
+    if os.path.splitext(topology)[1] in ('.top', '.prmtop'):
+        top = AmberPrmtopFile(topology)
+        mdtop = mdtraj.Topology.from_openmm(top.topology)
+        traj = mdtraj.load_frame(trajectory, int(nframe), top=mdtop)
+        structure = parmed.openmm.load_topology(
+            top.topology, system=top.createSystem())
+    else: # standard protocol (the topology is loaded twice, though)
+        traj = mdtraj.load_frame(trajectory, int(nframe), top=topology)
+        structure = parmed.load_file(topology)
+    
     xyz = traj.openmm_positions(0).value_in_unit(u.angstrom)
-    structure = parmed_load_file(topology, xyz=xyz, structure=True)
+    box_lengths = u.Quantity(traj.unitcell_lengths[0], unit=u.nanometers)
+    box = box_lengths.value_in_unit(u.angstrom).tolist() + traj.unitcell_angles[0].tolist()
+    
+    structure.box = box
+    structure.positions = xyz
     structure.save(output, overwrite=True)
 
 
@@ -804,7 +817,7 @@ def export_frame_coordinates(topology, trajectory, nframe, output=None):
 REPORTERS = {
     'PDB': PDBReporter,
     'DCD': SegmentedDCDReporter,
-    'CHK': app.CheckpointReporter,
+    'CHK': CheckpointReporter,
     'HDF5':  HDF5Reporter,
     'NETCDF': NetCDFReporter,
     'MDCRD': MdcrdReporter,
