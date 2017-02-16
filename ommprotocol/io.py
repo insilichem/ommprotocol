@@ -443,7 +443,11 @@ class BoxVectors(MultiFormatLoader):
 
     @classmethod
     def _loaders(cls, ext):
-        return {'xsc': cls.from_xsc}[ext]
+        return {'xsc': cls.from_xsc,
+                'csv': cls.from_csv,
+                'pdb': cls.from_pdb,
+                'inpcrd': cls.from_inpcrd,
+                'crd': cls.from_inpcrd}[ext]
 
     @classmethod
     def from_xsc(cls, path):
@@ -498,10 +502,20 @@ class BoxVectors(MultiFormatLoader):
             return u.Quantity([[fields[0], 0, 0],
                                [0, fields[1], 0],
                                [0, 0, fields[2]]], unit=u.nanometers)
-        if len(fields) == 9:
+        elif len(fields) == 9:
             return u.Quantity([fields[0:3],
                                fields[3:6],
                                fields[6:9]], unit=u.nanometers)
+
+    @classmethod
+    def from_pdb(cls, path):
+        pdb = PDBFile(path)
+        return pdb.topology.getPeriodicBoxVectors()
+
+    @classmethod
+    def from_inpcrd(cls, path):
+        inpcrd = AmberInpcrdFile(path)
+        return inpcrd.boxVectors
 
 
 class Restart(MultiFormatLoader, InputContainer):
@@ -717,6 +731,7 @@ def prepare_handler(cfg):
     if 'positions' in cfg:
         positions_path = sanitize_path_for_file(cfg.pop('positions'), _path)
         positions = Positions.load(positions_path)
+        boxvectors = BoxVectors.load(positions_path)
 
     if 'velocities' in cfg:
         velocities_path = sanitize_path_for_file(cfg.pop('velocities'), _path)
