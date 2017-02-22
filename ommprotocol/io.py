@@ -640,9 +640,9 @@ class ProgressBarReporter(object):
 
         margin = ' ' * self.margin
         ns_day = ns/days
-        delta = (self.total_steps-steps)*time/steps
+        delta = ((self.total_steps-steps)*time.total_seconds())/steps
         # remove microseconds to have cleaner output
-        remaining = timedelta(days=delta.days, seconds=delta.seconds)
+        remaining = timedelta(seconds=int(delta))
         percentage = 100.0*steps/self.total_steps
         if ns_day:
             template = '{}{}/{} steps ({:.1f}%) - {} left @ {:.1f} ns/day                    \r'
