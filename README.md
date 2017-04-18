@@ -128,10 +128,10 @@ Ommprotocol is scientific software, funded by public research grants (Spanish MI
 
 ```
 @misc{jaime_rgp_2017_546882,
-  author       = {Jaime RGP and 
+  author       = {Jaime Rodríguez-Guerra Pedregal and 
                   Daniel Soler and 
-                  Lur Alonso and 
-                  Jean-Didier Marechal},
+                  Lur Alonso-Cotchico and 
+                  Jean-Didier Maréchal},
   title        = {insilichem/ommprotocol: Ommprotocol 0.1.4},
   month        = apr,
   year         = 2017,
