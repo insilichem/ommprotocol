@@ -1,6 +1,8 @@
 ommprotocol
 ===========
 
+[![DOI](https://zenodo.org/badge/50431234.svg)](https://zenodo.org/badge/latestdoi/50431234)
+
 Easy to deploy MD protocols for OpenMM!
 
 *By Jaime Rodríguez-Guerra ([@jaimergp](https://github.com/jaimergp)). Contributors: Lur Alonso*
@@ -117,3 +119,23 @@ The following keys are available for the input file. They are listed in differen
 ## Get help
 
 If you have problems running `ommprotocol`, feel free to [create an issue](https://github.com/insilichem/ommprotocol/issues)! Also, make sure to visit our main webpage at [www.insilichem.com](www.insilichem.com).
+
+## Citation
+
+[![DOI](https://zenodo.org/badge/50431234.svg)](https://zenodo.org/badge/latestdoi/50431234)
+
+Ommprotocol is scientific software, funded by public research grants (Spanish MINECO's project ``CTQ2014-54071-P``, Generalitat de Catalunya's project ``2014SGR989`` and research grant ``2015FI_B00768``, COST Action ``CM1306``). If you make use of Ommprotocol in scientific publications, please cite it. It will help measure the impact of our research and future funding!
+
+```
+@misc{jaime_rgp_2017_546882,
+  author       = {Jaime RGP and 
+                  Daniel Soler and 
+                  Lur Alonso and 
+                  Jean-Didier Marechal},
+  title        = {insilichem/ommprotocol: Ommprotocol 0.1.4},
+  month        = apr,
+  year         = 2017,
+  doi          = {10.5281/zenodo.546882},
+  url          = {https://doi.org/10.5281/zenodo.546882}
+}
+```
