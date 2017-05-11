@@ -53,6 +53,7 @@ INTEGRATORS = {
     None: mm.LangevinIntegrator,
 }
 PRECISION = {
+    'CPU': None,
     'CUDA': 'CudaPrecision',
     'OpenCL': 'OpenCLPrecision'
 }
@@ -160,6 +161,8 @@ class Stage(object):
     platform : str, optional
         Which platform to use ('CPU', 'CUDA', 'OpenCL'). If not set,
         OpenMM will choose the fastest available.
+    platform_properties : dict, optional
+        Additional options to be passed to the platform constructor.
     precision : str, optional
         Precision model to use: single, double or mixed.
     system_options : dict, optional
@@ -186,9 +189,9 @@ class Stage(object):
     def __init__(self, handler, positions=None, velocities=None, box=None,
                  steps=0, minimization=True, barostat=True, temperature=300,
                  timestep=1.0, pressure=1.01325, integrator='LangevinIntegrator',
-                 barostat_interval=25, system_options=None, platform=None, precision=None,
-                 trajectory=None, trajectory_every=2000, outputpath='.',
-                 trajectory_atom_subset=None, trajectory_new_every=0,
+                 barostat_interval=25, system_options=None, platform=None, 
+                 platform_properties=None, trajectory=None, trajectory_every=2000, 
+                 outputpath='.', trajectory_atom_subset=None, trajectory_new_every=0,
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None, friction=1.0,
@@ -222,7 +225,7 @@ class Stage(object):
         self.barostat_interval = int(barostat_interval)
         # Hardware
         self._platform = platform
-        self.precision = precision
+        self.platform_properties = platform_properties
         # Output parameters
         self.project_name = project_name if project_name is not None else self._PROJECTNAME
         self.name = name if name is not None else random_string(length=5)
@@ -361,9 +364,19 @@ class Stage(object):
     @property
     def simulation(self):
         if self._simulation is None:
-            sim = self._simulation = app.Simulation(self.handler.topology, self.system,
-                                                    self.integrator, *self.platform)
-
+            platform = self.platform
+            try:
+                sim = self._simulation = app.Simulation(self.handler.topology, self.system,
+                                                        self.integrator, *platform)
+            except Exception as e:
+                template = '{}. Try with: {}.'
+                if 'Illegal property name' in str(e):
+                    msg = template.format(e, ', '.join(platform[0].getPropertyNames()))
+                    raise ValueError(msg)
+                elif 'There is no registered Platform' in str(e):
+                    msg = template.format(e, ', '.join(available_platforms()))
+                    raise ValueError(msg)
+                raise e
             # Box vectors
             box = self.box if self.box is not None else self.handler.box
             if box is not None:
@@ -409,9 +422,11 @@ class Stage(object):
     @property
     def platform(self):
         if self._platform is None:
-            return None, None
-        return (mm.Platform.getPlatformByName(self._platform),
-                {PRECISION[self._platform]: self.precision})
+            return None,
+        platform = mm.Platform.getPlatformByName(self._platform)
+        if self.platform_properties is None:
+            return platform,
+        return platform, self.platform_properties
 
     def reporter(self, name):
         try:
@@ -612,3 +627,10 @@ class Stage(object):
 
     def _mask_selection(self, expression):
         pass
+
+def available_platforms():
+    names = []
+    for i in range(mm.Platform.getNumPlatforms()):
+        platform = mm.Platform.getPlatform(i)
+        names.append(platform.getName())
+    return names
