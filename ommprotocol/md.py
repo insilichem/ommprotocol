@@ -426,6 +426,15 @@ class Stage(object):
         platform = mm.Platform.getPlatformByName(self._platform)
         if self.platform_properties is None:
             return platform,
+        
+        # Patch to allow env-defined GPUs
+        if str(self.platform_properties.get('DeviceIndex', '')).startswith('ENV_'):
+            device = self.platform_properties.get('DeviceIndex')
+            envvar = os.environ.get(device[4:], None)
+            if envvar is not None:
+                print('Warning: Setting DeviceIndex from env var', device[4:], 'to', envvar)
+                self.platform_properties['DeviceIndex'] = envvar
+
         return platform, self.platform_properties
 
     def reporter(self, name):
