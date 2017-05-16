@@ -31,7 +31,7 @@ from simtk import unit as u
 from simtk.openmm.app import (PDBFile, ForceField, AmberPrmtopFile, PDBReporter,
                               AmberInpcrdFile, CharmmPsfFile, CharmmParameterSet,
                               CheckpointReporter)
-from simtk.openmm import XmlSerializer
+from simtk.openmm import XmlSerializer, app as openmm_app
 import mdtraj
 from mdtraj.reporters import DCDReporter, HDF5Reporter
 import parmed
@@ -768,6 +768,12 @@ def prepare_system_options(cfg, fill_not_found=True):
         for key in ['rigidWater', 'ewaldErrorTolerance']:
             if key in 'cfg':
                 d[key] = cfg.pop(key)
+    if 'extra_system_options' in cfg:
+        if 'implicitSolvent' in cfg['extra_system_options']:
+            implicit_solvent = getattr(openmm_app, 
+                                       cfg['extra_system_options']['implicitSolvent'], None)
+            cfg['extra_system_options']['implicitSolvent'] = implicit_solvent
+        d.update(cfg.pop('extra_system_options'))
     return d
 
 
