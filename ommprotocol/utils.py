@@ -76,7 +76,7 @@ def timed_input(prompt, timeout=300.0):
     astring = None
     try:
         timer.start()
-        astring = raw_input(prompt)
+        astring = raw_input()
     except KeyboardInterrupt:
         pass
     timer.cancel()
