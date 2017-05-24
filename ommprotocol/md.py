@@ -16,6 +16,7 @@ from contextlib import contextmanager
 from simtk import unit as u
 from simtk import openmm as mm
 from simtk.openmm import app
+from mdtraj import Topology as MDTrajTopology
 # Own
 from .io import REPORTERS, ProgressBarReporter, prepare_system_options
 from .utils import random_string, assert_not_exists, timed_input
@@ -26,12 +27,9 @@ from .utils import random_string, assert_not_exists, timed_input
 
 FORCEFIELDS = ['amber99sbildn.xml', 'tip3p.xml']
 SELECTORS = {
-    None: lambda a: False,
-    'all': lambda a: True,
-    'protein': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA'),
-    'protein_no_H': lambda a: a.residue.name not in ('WAT', 'HOH', 'TIP3') and a.name not in ('Cl-', 'Na+', 'SOD', 'CLA') and a.element.symbol != 'H',
-    'backbone': lambda a: a.name in ('CA', 'C', 'N'),
-    'calpha': lambda a: a.name == 'CA'
+    None: 'none',
+    'protein_no_H': 'protein and element != H',
+    'calpha': 'name == CA'
 }
 NONBONDEDMETHODS = {
     'NoCutoff': app.NoCutoff, '': app.NoCutoff, None: app.NoCutoff, 'None': app.NoCutoff,
@@ -451,16 +449,16 @@ class Stage(object):
                                                    self.barostat_interval))
 
     def apply_constraints(self):
-        subset = self.subset(self.constrained_atoms)
-        for i, atom in enumerate(self.handler.topology.atoms()):
-            if subset(atom):
-                self.system.setParticleMass(i, 0.0)
+        indices = self.subset(self.constrained_atoms)
+        system = self.system
+        for i in indices:
+            system.setParticleMass(int(i), 0.0)
 
     def apply_restraints(self):
         force = self.restrain_force(self.restraint_strength)
-        subset = self.subset(self.restrained_atoms)
+        indices = self.subset(self.restrained_atoms)
         positions = self.positions if self.positions is not None else self.handler.positions
-        self.apply_force(self.handler.topology, positions, force, subset)
+        self.apply_force(self.handler.topology, positions, force, indices)
 
     @property
     def progress_reporter(self):
@@ -544,10 +542,16 @@ class Stage(object):
         self._restart_reporter = None
 
     def subset(self, selector):
-        try:
-            return SELECTORS[selector]
-        except KeyError:
-            raise NotImplementedError('Selector {} not found'.format(selector))
+        """
+        Returns a list of atom indices corresponding to a MDTraj DSL
+        query. Also will accept list of numbers, which will be coerced
+        to int and returned.
+        """
+        if isinstance(selector, (list, tuple)):
+            return map(int, selector)
+        selector = SELECTORS.get(selector, selector)
+        mdtop = MDTrajTopology.from_openmm(self.handler.topology)
+        return mdtop.select(selector)
 
     @property
     def system_mass(self):
@@ -555,12 +559,11 @@ class Stage(object):
         return system_mass * u.dalton
 
     @staticmethod
-    def apply_force(topology, positions, force, subset=None):
-        if subset is None:
-            subset = lambda x: True
-        for i, (atom, position) in enumerate(zip(topology.atoms(), positions)):
-            if subset(atom):
-                force.addParticle(i, position.value_in_unit(u.nanometers))
+    def apply_force(topology, positions, force, indices=None):
+        if indices is None:
+            indices = range(topology.getNumAtoms())
+        for i in indices:
+            force.addParticle(i, positions[i].value_in_unit(u.nanometers))
 
     @staticmethod
     def restrain_force(strength=5.0):
@@ -599,7 +602,7 @@ class Stage(object):
             if isinstance(ex, KeyboardInterrupt):
                 reraise = False
                 answer = timed_input('\n\nDo you want to save current state? (y/N): ')
-                if answer not in ('Y', 'y', 'yes', 'YES'):
+                if answer.lower() not in ('y', 'yes'):
                     if verbose:
                         sys.exit('Ok, bye!')
             else:
