@@ -1,6 +1,6 @@
 package:
   name: ommprotocol
-  version: "0.1.2"
+  version: {{ environ.get('GIT_DESCRIBE_TAG', 'v')[1:] }}
 
 about:
   home: https://github.com/insilichem/ommprotocol
@@ -8,7 +8,8 @@ about:
   summary: Easy to deploy MD protocols for OpenMM
 
 source:
-  path: ../
+  git_url: https://github.com/insilichem/ommprotocol.git
+  git_tag: {{ environ.get('GIT_DESCRIBE_TAG', '') }}
 
 requirements:
   build:
