@@ -21,9 +21,10 @@ restart: rs
 restart_every: 1e6
 save_state_at_end: True
 
-# # hardware
-# platform: CUDA
-# precision: mixed
+# hardware
+platform: CUDA
+extra_platform_options:
+    Precision: mixed
 
 # conditions
 integrator: LangevinIntegrator
@@ -40,6 +41,8 @@ nonbondedMethod: CutoffNonPeriodic
 nonbondedCutoff: 1.0 # nm
 constraints: HBonds
 rigidWater: True
+extra_system_options:
+        implicitSolvent: GBn2
 
 stages:
     -   name: implicit

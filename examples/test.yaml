@@ -1,4 +1,4 @@
-# Standard protocol
+# Test protocol
 
 # input
 topology: sys.prmtop
@@ -21,9 +21,9 @@ restart: rs
 restart_every: 1e6
 save_state_at_end: True
 
-# # hardware
-# platform: CUDA
-# precision: mixed
+platform: CUDA
+extra_platform_options:
+    Precision: single
 
 # conditions
 integrator: LangevinIntegrator
