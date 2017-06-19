@@ -16,8 +16,9 @@ del get_versions
 
 
 def run_protocol():
-    handler, cfg = prepare_input()
-    protocol(handler, cfg)
+    handler, cfg, args = prepare_input()
+    if not args.check:
+        protocol(handler, cfg)
 
 
 def state_to_pdb():

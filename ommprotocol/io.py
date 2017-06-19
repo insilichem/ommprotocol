@@ -39,7 +39,7 @@ from parmed.namd import NamdBinCoor, NamdBinVel
 from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
 from openmoltools.utils import create_ffxml_file
 # Own
-from .utils import sanitize_path_for_file
+from .utils import sanitize_path_for_file, ignored_exceptions
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
@@ -690,11 +690,13 @@ def prepare_input(argv=None):
     """
     Get, parse and prepare input file.
     """
-    p = ArgumentParser(description='insiliChem.bio OpenMM launcher: '
+    p = ArgumentParser(description='InsiliChem Ommprotocol: '
                        'easy to deploy MD protocols for OpenMM')
     p.add_argument('input', metavar='INPUT FILE', type=str,
                    help='YAML input file')
     p.add_argument('--version', action='version', version='%(prog)s v{}'.format(__version__))
+    p.add_argument('-c', '--check', action='store_true',
+                   help='Validate input file only')
     args = p.parse_args(argv if argv else sys.argv[1:])
 
     # Load config file
@@ -704,14 +706,14 @@ def prepare_input(argv=None):
     cfg['_path'] = os.path.abspath(args.input)
     cfg['system_options'] = prepare_system_options(cfg)
     cfg['outputpath'] = sanitize_path_for_file(cfg.get('outputpath', '.'), args.input)
-    try:
-        os.makedirs(cfg['outputpath'])
-    except OSError:
-        pass
+
+    if not args.check:
+        with ignored_exceptions(OSError):
+            os.makedirs(cfg['outputpath'])
 
     handler = prepare_handler(cfg)
 
-    return handler, cfg
+    return handler, cfg, args
 
 
 def prepare_handler(cfg):
@@ -770,7 +772,7 @@ def prepare_system_options(cfg, fill_not_found=True):
                 d[key] = cfg.pop(key)
     if 'extra_system_options' in cfg:
         if 'implicitSolvent' in cfg['extra_system_options']:
-            implicit_solvent = getattr(openmm_app, 
+            implicit_solvent = getattr(openmm_app,
                                        cfg['extra_system_options']['implicitSolvent'], None)
             cfg['extra_system_options']['implicitSolvent'] = implicit_solvent
         d.update(cfg.pop('extra_system_options'))
@@ -810,7 +812,7 @@ def export_frame_coordinates(topology, trajectory, nframe, output=None):
     if output is None:
         basename, ext = os.path.splitext(trajectory)
         output = '{}.frame{}.inpcrd'.format(basename, nframe)
-    
+
     # ParmEd sometimes struggles with certain PRMTOP files
     if os.path.splitext(topology)[1] in ('.top', '.prmtop'):
         top = AmberPrmtopFile(topology)
@@ -822,7 +824,7 @@ def export_frame_coordinates(topology, trajectory, nframe, output=None):
     else:  # standard protocol (the topology is loaded twice, though)
         traj = mdtraj.load_frame(trajectory, int(nframe), top=topology)
         structure = parmed.load_file(topology)
-    
+
     structure.positions = traj.openmm_positions(0)
 
     if traj.unitcell_vectors is not None:  # if frame provides box vectors, use those
