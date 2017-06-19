@@ -11,6 +11,7 @@
 Collection of miscelaneous functions
 """
 from __future__ import print_function
+from contextlib import contextmanager
 import os
 import random
 import string
@@ -21,6 +22,7 @@ except ImportError:
     import _thread as thread
 import threading
 
+from simtk import openmm as mm
 
 if sys.version_info.major == 3:
     raw_input = input
@@ -58,6 +60,22 @@ def assertinstance(obj, types):
     if isinstance(obj, types):
         return obj
     raise TypeError('{} must be instance of {}'.format(obj, types))
+
+
+def available_platforms():
+    names = []
+    for i in range(mm.Platform.getNumPlatforms()):
+        platform = mm.Platform.getPlatform(i)
+        names.append(platform.getName())
+    return names
+
+
+@contextmanager
+def ignored_exceptions(*exceptions):
+    try:
+        yield
+    except exceptions:
+        pass
 
 
 def random_string(length=5):

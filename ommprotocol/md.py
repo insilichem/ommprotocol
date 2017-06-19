@@ -19,7 +19,7 @@ from simtk.openmm import app
 from mdtraj import Topology as MDTrajTopology
 # Own
 from .io import REPORTERS, ProgressBarReporter, prepare_system_options
-from .utils import random_string, assert_not_exists, timed_input
+from .utils import random_string, assert_not_exists, timed_input, available_platforms
 
 ###########################
 # Defaults
@@ -187,8 +187,8 @@ class Stage(object):
     def __init__(self, handler, positions=None, velocities=None, box=None,
                  steps=0, minimization=True, barostat=True, temperature=300,
                  timestep=1.0, pressure=1.01325, integrator='LangevinIntegrator',
-                 barostat_interval=25, system_options=None, platform=None, 
-                 platform_properties=None, trajectory=None, trajectory_every=2000, 
+                 barostat_interval=25, system_options=None, platform=None,
+                 platform_properties=None, trajectory=None, trajectory_every=2000,
                  outputpath='.', trajectory_atom_subset=None, trajectory_new_every=0,
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
@@ -424,10 +424,10 @@ class Stage(object):
         platform = mm.Platform.getPlatformByName(self._platform)
         if self.platform_properties is None:
             return platform,
-        
+
         # Patch to allow env-defined GPUs
-        if str(self.platform_properties.get('DeviceIndex', '')).startswith('ENV_'):
-            device = self.platform_properties.get('DeviceIndex')
+        device = self.platform_properties.get('DeviceIndex', '')
+        if str(device).startswith('ENV_'):
             envvar = os.environ.get(device[4:], None)
             if envvar is not None:
                 print('Warning: Setting DeviceIndex from env var', device[4:], 'to', envvar)
@@ -639,10 +639,3 @@ class Stage(object):
 
     def _mask_selection(self, expression):
         pass
-
-def available_platforms():
-    names = []
-    for i in range(mm.Platform.getNumPlatforms()):
-        platform = mm.Platform.getPlatform(i)
-        names.append(platform.getName())
-    return names
