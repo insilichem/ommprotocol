@@ -772,60 +772,65 @@ def prepare_handler(cfg):
     """
     Load all files into single object.
     """
-    positions, velocities, boxvectors = None, None, None
+    positions, velocities, box = None, None, None
     _path = cfg['_path']
+    forcefield = cfg.pop('forcefield', None)
+    topology = sanitize_path_for_file(cfg.pop('topology'), _path)
 
     if 'checkpoint' in cfg:
         restart_path = sanitize_path_for_file(cfg['checkpoint'], _path)
         restart = Restart.load(restart_path)
         positions = restart.positions
         velocities = restart.velocities
-        boxvectors = restart.box
+        box = restart.box
 
     if 'positions' in cfg:
         positions_path = sanitize_path_for_file(cfg.pop('positions'), _path)
         positions = Positions.load(positions_path)
-        boxvectors = BoxVectors.load(positions_path)
+        box = BoxVectors.load(positions_path)
 
     if 'velocities' in cfg:
         velocities_path = sanitize_path_for_file(cfg.pop('velocities'), _path)
         velocities = Velocities.load(velocities_path)
 
     if 'box' in cfg:
-        boxvectors_path = sanitize_path_for_file(cfg.pop('box'), _path)
-        boxvectors = BoxVectors.load(boxvectors_path)
+        box_path = sanitize_path_for_file(cfg.pop('box'), _path)
+        box = BoxVectors.load(box_path)
+    
+    options = {}
+    for key in 'positions velocities box forcefield'.split():
+        value = locals()[key]
+        if value is not None:
+            options[key] = value
 
-    return SystemHandler.load(cfg.pop('topology'), positions=positions, velocities=velocities,
-                              box=boxvectors, forcefield=cfg.pop('forcefield', None),
-                              charmm_parameters=cfg.pop('charmm_parameters', None))
+    return SystemHandler.load(topology, **options)
 
 
 def prepare_system_options(cfg, fill_not_found=True):
     """
     Retrieve and delete (pop) system options from input configuration.
     """
-    from .md import NONBONDEDMETHODS, CONSTRAINTS
+    from .md import NONBONDEDMETHODS
     d = {}
     if fill_not_found:
-        d['nonbondedMethod'] = NONBONDEDMETHODS.get(cfg.pop('nonbondedMethod', None))
+        d['nonbondedMethod'] = warned_getattr(openmm_app, cfg.pop('nonbondedMethod', NONBONDEDMETHODS.get('nonbondedMethod')), None)
         d['nonbondedCutoff'] = cfg.pop('nonbondedCutoff', None) * u.nanometers
-        d['constraints'] = CONSTRAINTS.get(cfg.pop('constraints', None))
+        d['constraints'] = warned_getattr(openmm_app, cfg.pop('constraints', None), None)
         for key in ['rigidWater', 'ewaldErrorTolerance']:
             d[key] = cfg.pop(key, None)
     else:
         if 'nonbondedMethod' in cfg:
-            d['nonbondedMethod'] = NONBONDEDMETHODS.get(cfg.pop('nonbondedMethod'))
+            d['nonbondedMethod'] = warned_getattr(openmm_app, cfg.pop('nonbondedMethod'), NONBONDEDMETHODS.get('nonbondedMethod'))
         if 'nonbondedCutoff' in cfg:
             d['nonbondedCutoff'] = cfg.pop('nonbondedCutoff') * u.nanometers
         if 'constraints' in cfg:
-            d['constraints'] = CONSTRAINTS.get(cfg.pop('constraints'))
+            d['constraints'] = warned_getattr(openmm_app, cfg.pop('constraints'), None)
         for key in ['rigidWater', 'ewaldErrorTolerance']:
             if key in 'cfg':
                 d[key] = cfg.pop(key)
     if 'extra_system_options' in cfg:
         if 'implicitSolvent' in cfg['extra_system_options']:
-            implicit_solvent = getattr(openmm_app,
-                                       cfg['extra_system_options']['implicitSolvent'], None)
+            implicit_solvent = warned_getattr(openmm_app, cfg['extra_system_options']['implicitSolvent'], None)
             cfg['extra_system_options']['implicitSolvent'] = implicit_solvent
         d.update(cfg.pop('extra_system_options'))
     return d

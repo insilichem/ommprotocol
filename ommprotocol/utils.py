@@ -111,3 +111,11 @@ def timed_input(prompt, timeout=300.0):
         pass
     timer.cancel()
     return astring
+
+
+def warned_getattr(name, attr, default):
+    try:
+        return getattr(name, attr)
+    except AttributeError:
+        print('! Value for `{}` not found. Using default `{}`'.format(attr, default))
+        return default

@@ -19,7 +19,7 @@ from simtk.openmm import app
 from mdtraj import Topology as MDTrajTopology
 # Own
 from .io import REPORTERS, ProgressBarReporter, prepare_system_options
-from .utils import random_string, assert_not_exists, timed_input, available_platforms
+from .utils import random_string, assert_not_exists, timed_input, available_platforms, warned_getattr
 
 ###########################
 # Defaults
@@ -32,23 +32,10 @@ SELECTORS = {
     'calpha': 'name == CA'
 }
 NONBONDEDMETHODS = {
-    'NoCutoff': app.NoCutoff, '': app.NoCutoff, None: app.NoCutoff, 'None': app.NoCutoff,
-    'CutoffNonPeriodic': app.CutoffNonPeriodic,
-    'CutoffPeriodic': app.CutoffPeriodic,
-    'Ewald': app.Ewald,
-    'PME': app.PME
+    None: app.NoCutoff, 'None': app.NoCutoff, '': app.NoCutoff
 }
-CONSTRAINTS = {
-    '': None, None: None, 'None': None,
-    'HBonds': app.HBonds,
-    'AllBonds': app.AllBonds,
-    'HAngles': app.HAngles
-}
-
 INTEGRATORS = {
-    'BrownianIntegrator': mm.BrownianIntegrator,
-    'LangevinIntegrator': mm.LangevinIntegrator,
-    None: mm.LangevinIntegrator,
+    None: mm.LangevinIntegrator, 'None': mm.LangevinIntegrator, '': mm.LangevinIntegrator,
 }
 PRECISION = {
     'CPU': None,
@@ -403,13 +390,15 @@ class Stage(object):
     def integrator(self):
         if self._integrator is None:
             try:
-                i = INTEGRATORS[self._integrator_name]
-            except KeyError:
-                raise NotImplementedError('Integrator {} not found'.format(self._integrator))
-            else:
-                self._integrator = i(self.temperature * u.kelvin,
-                                     self.friction / u.picoseconds,
-                                     self.timestep * u.femtoseconds)
+                i = getattr(mm, self._integrator_name)
+            except AttributeError:
+                try:
+                    i = INTEGRATORS[self._integrator_name]
+                except KeyError:
+                    raise NotImplementedError('Integrator {} not found'.format(self._integrator))
+            self._integrator = i(self.temperature * u.kelvin,
+                                 self.friction / u.picoseconds,
+                                 self.timestep * u.femtoseconds)
         return self._integrator
 
     @integrator.deleter
