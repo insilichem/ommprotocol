@@ -131,7 +131,7 @@ class Stage(object):
         Save information for just these atoms (only DCD).
     restart_every : int, optional
         Frequencty of restart file creation. Defaults to 1E6 steps (1ns)
-    stdout_every : int, optional
+    report_every : int, optional
         Frequency of stdout print, in number of simulation steps
     verbose : bool, optional
         Whether to report information to stdout or not
@@ -148,8 +148,6 @@ class Stage(object):
         OpenMM will choose the fastest available.
     platform_properties : dict, optional
         Additional options to be passed to the platform constructor.
-    precision : str, optional
-        Precision model to use: single, double or mixed.
     system_options : dict, optional
         Set of options to configure the system. See SYSTEM_OPTIONS dict
         for defaults.

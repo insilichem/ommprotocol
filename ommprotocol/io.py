@@ -667,7 +667,7 @@ class ProgressBarReporter(object):
             energies respectively.
         """
         steps = self.interval - simulation.currentStep % self.interval
-        return (steps, False, False, False, False)
+        return steps, False, False, False, False
 
     def report(self, simulation, state):
         """Generate a report.
@@ -856,7 +856,7 @@ def process_forcefield(*forcefields):
 def statexml2pdb(topology, state, output=None):
     """
     Given an OpenMM xml file containing the state of the simulation,
-    generate a PDB snapshot for easy visualization
+    generate a PDB snapshot for easy visualization.
     """
     state = Restart.from_xml(state)
     system = SystemHandler.load(topology, positions=state.positions)
@@ -866,6 +866,9 @@ def statexml2pdb(topology, state, output=None):
 
 
 def export_frame_coordinates(topology, trajectory, nframe, output=None):
+    """
+    Extract a single frame structure from a trajectory.
+    """
     if output is None:
         basename, ext = os.path.splitext(trajectory)
         output = '{}.frame{}.inpcrd'.format(basename, nframe)
