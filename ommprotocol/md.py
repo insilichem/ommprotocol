@@ -279,7 +279,7 @@ class Stage(object):
 
         if self.steps:
             # Stdout progress
-            if self.progress_reporter not in self.simulation.reporters:
+            if self.report and self.progress_reporter not in self.simulation.reporters:
                 self.simulation.reporters.append(self.progress_reporter)
 
             # Log report
