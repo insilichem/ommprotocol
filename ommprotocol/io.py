@@ -28,9 +28,12 @@ try:
 except ImportError:
     from ruamel import yaml
 from simtk import unit as u
-from simtk.openmm.app import (PDBFile, ForceField, AmberPrmtopFile, PDBReporter,
-                              AmberInpcrdFile, CharmmPsfFile, CharmmParameterSet,
-                              CheckpointReporter)
+from simtk.openmm.app import (PDBFile, PDBxFile, ForceField, 
+                              PDBReporter, PDBxReporter,
+                              AmberPrmtopFile, AmberInpcrdFile, 
+                              CharmmPsfFile, CharmmParameterSet,
+                              GromacsTopFile, GromacsGroFile, 
+                              DesmondDMSFile, CheckpointReporter)
 from simtk.openmm import XmlSerializer, app as openmm_app
 import mdtraj
 from mdtraj.reporters import DCDReporter, HDF5Reporter
@@ -182,30 +185,33 @@ class SystemHandler(MultiFormatLoader, InputContainer):
     Parameters
     ----------
     path : str
-        Path to desired topology file. Supports pdb, prmtop, psf, 
+        Path to desired topology file. Supports pdb, prmtop, psf, top, dms,
         pickled OpenMM Topology objects.
     """
 
     @classmethod
     def _loaders(cls, ext):
         return {'pdb': cls.from_pdb,
-                'prmtop': cls.from_prmtop,
-                'top': cls.from_prmtop,
-                'psf': cls.from_psf,
+                'pdbx': cls.from_pdbx,
+                'cif': cls.from_pdbx,
+                'prmtop': cls.from_amber,
+                'psf': cls.from_charmm,
+                'dms': cls.from_desmond,
+                'top': cls.from_gromacs,
                 'pickle': cls.from_pickle,
                 'pickle2': cls.from_pickle,
                 'pickle3': cls.from_pickle}[ext]
 
     @classmethod
-    def from_pdb(cls, path, forcefield=None, **kwargs):
+    def from_pdb(cls, path, forcefield=None, loader=PDBFile, **kwargs):
         """
         Loads topology, positions and, potentially, velocities and vectors,
-        from a PDB file
+        from a PDB or PDBx file
 
         Parameters
         ----------
         path : str
-            Path to PDB file
+            Path to PDB/PDBx file
         forcefields : list of str
             Paths to FFXML and/or FRCMOD forcefields. REQUIRED.
 
@@ -215,7 +221,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             SystemHandler with topology, positions, and, potentially, velocities and
             box vectors. Forcefields are embedded in the `master` attribute.
         """
-        pdb = PDBFile(path)
+        pdb = loader(path)
         box = kwargs.pop('box', pdb.topology.getPeriodicBoxVectors())
         positions = kwargs.pop('positions', pdb.positions)
         velocities = kwargs.pop('velocities', getattr(pdb, 'velocities', None))
@@ -228,9 +234,14 @@ class SystemHandler(MultiFormatLoader, InputContainer):
 
         return cls(master=pdb.forcefield, topology=pdb.topology, positions=positions,
                    velocities=velocities, box=box, path=path, **kwargs)
+    
+    @classmethod
+    def from_pdbx(cls, *args, **kwargs):
+        __doc__ = cls.from_pdb.__doc__
+        return cls.from_pdb(loader=PDBxFile, *args, **kwargs)
 
     @classmethod
-    def from_prmtop(cls, path, positions=None, **kwargs):
+    def from_amber(cls, path, positions=None, **kwargs):
         """
         Loads Amber Parm7 parameters and topology file
 
@@ -247,14 +258,14 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             SystemHandler with topology
         """
         if positions is None:
-            raise ValueError('TOP/PRMTOP files require initial positions.')
+            raise ValueError('Amber TOP/PRMTOP files require initial positions.')
         prmtop = AmberPrmtopFile(path)
         box = kwargs.pop('box', prmtop.topology.getPeriodicBoxVectors())
         return cls(master=prmtop, topology=prmtop.topology, positions=positions, box=box,
                    path=path, **kwargs)
 
     @classmethod
-    def from_psf(cls, path, positions=None, charmm_parameters=None, **kwargs):
+    def from_charmm(cls, path, positions=None, forcefield=None, **kwargs):
         """
         Loads PSF Charmm structure from `path`. Requires `charmm_parameters`.
 
@@ -262,7 +273,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         ----------
         path : str
             Path to PSF file
-        charmm_parameters : list of str
+        forcefield : list of str
             Paths to Charmm parameters files, such as *.par or *.str. REQUIRED
 
         Returns
@@ -272,14 +283,46 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             the `master` attribute.
         """
         psf = CharmmPsfFile(path)
-        if charmm_parameters is None:
-            raise ValueError('PSF files require key `charmm_parameters`.')
+        if forcefield is None:
+            raise ValueError('PSF files require key `forcefield`.')
         if positions is None:
             raise ValueError('PSF files require key `positions`.')
-        psf.parmset = CharmmParameterSet(*charmm_parameters)
+        psf.parmset = CharmmParameterSet(*forcefield)
         psf.loadParameters(psf.parmset)
         return cls(master=psf, topology=psf.topology, positions=positions, path=path,
                    **kwargs)
+    
+    @classmethod
+    def from_desmond(cls, path, **kwargs):
+        """
+        """
+        dms = DesmondDMSFile(path)
+        pos = kwargs.pop('positions', dms.getPositions())
+        return cls(master=dms, topology=dms.getTopology(), positions=pos, path=path, 
+                   **kwargs)
+
+    @classmethod
+    def from_gromacs(cls, path, positions=None, forcefield=None, **kwargs):
+        """
+        Loads a topology from a Gromacs TOP file located at `path`.abs
+
+        Additional root directory for parameters can be specified with `forcefield`.
+
+        Arguments
+        ---------
+        path : str
+            Path to a Gromacs TOP file
+        positions : simtk.unit.Quantity
+            Atomic positions
+        forcefield : str, optional
+            Root directory for parameter files
+        """
+        if positions is None:
+            raise ValueError('Gromacs TOP files require initial positions.')
+        box = kwargs.pop('box', None)
+        top = GromacsTopFile(path, includeDir=forcefield, periodicBoxVectors=box)
+        return cls(master=top, topology=top.topology, positions=positions, box=box,
+                   path=path, **kwargs)
 
     @classmethod
     def from_pickle(cls, path, positions=None, forcefield=None, **kwargs):
@@ -331,21 +374,18 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         Create an OpenMM system for every supported topology file with given system options
         """
         if self.master is None:
-            raise ValueError('This instance is not able to create systems.')
+            raise ValueError('Handler {} is not able to create systems.'.format(self))
 
         if isinstance(self.master, ForceField):
             system = self.master.createSystem(self.topology, **system_options)
-
-        elif isinstance(self.master, AmberPrmtopFile):
+        elif isinstance(self.master, (AmberPrmtopFile, GromacsTopFile, DesmondDMSFile)):
             system = self.master.createSystem(**system_options)
-
         elif isinstance(self.master, CharmmPsfFile):
             if not hasattr(self.master, 'parmset'):
-                raise ValueError('PSF topology files must be instantiated with Charmm parameters.')
+                raise ValueError('PSF topology files requiere Charmm parameters.')
             system = self.master.createSystem(self.master.parmset, **system_options)
-
         else:
-            raise NotImplementedError('This handler is not able to create systems.')
+            raise NotImplementedError('Handler {} is not able to create systems.'.format(self))
 
         if self.has_box:
             system.setDefaultPeriodicBoxVectors(*self.box)
@@ -380,6 +420,7 @@ class Positions(MultiFormatLoader):
     def _loaders(cls, ext):
         return {'pdb': cls.from_pdb,
                 'coor': cls.from_coor,
+                'gro': cls.from_gro,
                 'inpcrd': cls.from_inpcrd,
                 'crd': cls.from_inpcrd}[ext]
 
@@ -398,6 +439,11 @@ class Positions(MultiFormatLoader):
     def from_inpcrd(cls, path):
         inpcrd = AmberInpcrdFile(path)
         return inpcrd.positions
+
+    @classmethod
+    def from_gro(cls, path):
+        gro = GromacsGroFile(path)
+        return gro.getPositions()
 
 
 class Velocities(MultiFormatLoader):
@@ -446,6 +492,7 @@ class BoxVectors(MultiFormatLoader):
         return {'xsc': cls.from_xsc,
                 'csv': cls.from_csv,
                 'pdb': cls.from_pdb,
+                'gro': cls.from_gro,
                 'inpcrd': cls.from_inpcrd,
                 'crd': cls.from_inpcrd}[ext]
 
@@ -516,6 +563,11 @@ class BoxVectors(MultiFormatLoader):
     def from_inpcrd(cls, path):
         inpcrd = AmberInpcrdFile(path)
         return inpcrd.boxVectors
+
+    @classmethod
+    def from_gro(cls, path):
+        gro = GromacsGroFile(path)
+        return gro.getPositions()
 
 
 class Restart(MultiFormatLoader, InputContainer):
@@ -839,6 +891,7 @@ def export_frame_coordinates(topology, trajectory, nframe, output=None):
 
 REPORTERS = {
     'PDB': PDBReporter,
+    'PDBX': PDBxReporter,
     'DCD': SegmentedDCDReporter,
     'CHK': CheckpointReporter,
     'HDF5':  HDF5Reporter,
