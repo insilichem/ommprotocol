@@ -179,7 +179,8 @@ class Stage(object):
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None, friction=1.0,
                  minimization_tolerance=10, minimization_max_iterations=10000,
-                 save_state_at_end=True, total_stages=None, verbose=True,
+                 save_state_at_end=True, attempt_rescue=True,
+                 total_stages=None, verbose=True,
                  **kwargs):
         for k in kwargs:
             if not k.startswith('_'):
@@ -223,6 +224,7 @@ class Stage(object):
         self.report = report
         self.report_every = int(report_every)
         self.save_state_at_end = save_state_at_end
+        self.attempt_rescue = attempt_rescue
         self.total_stages = total_stages
         # Private attributes
         self._system = None
@@ -586,6 +588,8 @@ class Stage(object):
         try:
             yield
         except (KeyboardInterrupt, Exception) as ex:
+            if not self.attempt_rescue:
+                raise ex
             if isinstance(ex, KeyboardInterrupt):
                 reraise = False
                 answer = timed_input('\n\nDo you want to save current state? (y/N): ')
