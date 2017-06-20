@@ -42,7 +42,7 @@ from parmed.namd import NamdBinCoor, NamdBinVel
 from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
 from openmoltools.utils import create_ffxml_file
 # Own
-from .utils import sanitize_path_for_file, ignored_exceptions
+from .utils import sanitize_path_for_file, ignored_exceptions, warned_getattr, extant_file
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
@@ -744,7 +744,7 @@ def prepare_input(argv=None):
     """
     p = ArgumentParser(description='InsiliChem Ommprotocol: '
                        'easy to deploy MD protocols for OpenMM')
-    p.add_argument('input', metavar='INPUT FILE', type=str,
+    p.add_argument('input', metavar='INPUT FILE', type=extant_file,
                    help='YAML input file')
     p.add_argument('--version', action='version', version='%(prog)s v{}'.format(__version__))
     p.add_argument('-c', '--check', action='store_true',

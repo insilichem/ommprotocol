@@ -12,6 +12,7 @@ Collection of miscelaneous functions
 """
 from __future__ import print_function
 from contextlib import contextmanager
+import argparse
 import os
 import random
 import string
@@ -68,6 +69,17 @@ def available_platforms():
         platform = mm.Platform.getPlatform(i)
         names.append(platform.getName())
     return names
+
+
+def extant_file(path):
+    """
+    'Type' for argparse - checks that file exists but does not open.
+    """
+    if not os.path.exists(path):
+        # Argparse uses the ArgumentTypeError to give a rejection message like:
+        # error: argument input: x does not exist
+        raise argparse.ArgumentTypeError("{} does not exist".format(path))
+    return path
 
 
 @contextmanager
