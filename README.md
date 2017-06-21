@@ -3,22 +3,24 @@ ommprotocol
 
 [![DOI](https://zenodo.org/badge/50431234.svg)](https://zenodo.org/badge/latestdoi/50431234)
 
-Easy to deploy MD protocols for OpenMM!
+A command line application to launch MD protocols with OpenMM
 
 *By Jaime Rodríguez-Guerra ([@jaimergp](https://github.com/jaimergp)). Contributors: Lur Alonso*
 
-### Some cool features
+Some cool features
+------------------
 
-- No coding required - just a YAML input file!
-- Smart support for different input file formats:
-    * __Topology__: PDB, Amber's PRMTOP, Charmm's PSF
-    * __Positions__: PDB, COOR, INPCRD
-    * __Velocities__: PDB, VEL
-    * __Box vectors__: PDB, XSC, CSV
-- Choose your preferred **trajectory** format (PDB, DCD, HDF5, NETCDF, MDCRD) and **checkpoints** (Amber restart, OpenMM XML states, restart).
-- Live report of simulation progress, with estimated ETA and speed.
-- Checkpoint every n steps. Also, emergency rescue files are created if an error occurs. 
-- Autochunk the trajectories for easy handling.
++ No coding required - just a YAML input file!
++ Smart support for different input file formats:
+  + __Topology__: PDB/PDBx, Mol2, Amber's PRMTOP, Charmm's PSF, Gromacs' TOP, Desmond's DMS
+  + __Positions__: PDB, COOR, INPCRD, CRD, GRO
+  + __Velocities__: PDB, VEL
+  + __Box vectors__: PDB, XSC, CSV, INPCRD, GRO
+  + *A fallback method is implemented and will attempt to load verything else that might be supported by [ParmEd](http://parmed.github.io/ParmEd/html/index.html).*
++ Choose your preferred **trajectory** format (PDB, PDBx, DCD, HDF5, NETCDF, MDCRD) and **checkpoints** (Amber restart, OpenMM XML states, restart).
++ Live report of simulation progress, with estimated ETA and speed.
++ Checkpoint every *n* steps. Also, emergency rescue files are created if an error occurs.
++ Autochunk the trajectories for easy handling.
 
 Installation
 ------------
@@ -34,7 +36,7 @@ Installation
         conda config --add channels insilichem
 
 3. Install `ommprotocol`:
-    
+
         conda install ommprotocol
 
     Optionally, you can use a separate environment called `openmm`, and then activate it when required.
@@ -46,14 +48,14 @@ Installation
 
         ommprotocol -h
 
-
 Usage
 -----
+
 Quick launch:
 
     ommprotocol <inputfile.yaml>
 
-All input configuration is done through YAML files. A couple of sample inputs are included in `examples` folder; parameters should be self-explaining.
+All input configuration is done through YAML files. A couple of sample inputs are included in [`examples`](examples/) folder; parameters should be self-explaining.
 
 There's two main parts in these files: 
 
@@ -63,18 +65,20 @@ There's two main parts in these files:
 
 Available parameters
 --------------------
+
 The following keys are available for the input file. They are listed in different categories, but you can mix them up as you want. If an optional key is not provided, it will be set to the default value.
 
 ### Input options
-- `topology`: Main input file. Should contain, at least, the topology, but it can also contain positions, velocities, PBC vectors, forcefields... Supported file types: PDB, PRMTOP, PSF.
-- `positions`: File with the initial coordinates of the system. Overrides those in topology, if needed. Supported file types: PDB, INPCRD, COOR.
-- `velocities`: File containing the initial velocities of this stage. If not set, they will be set to the requested temperature. Supported file types: PDB, VEL.
+
+- `topology`: Main input file. Should contain, at least, the topology, but it can also contain positions, velocities, PBC vectors, forcefields...
+- `positions`: File with the initial coordinates of the system. Overrides those in topology, if needed.
+- `velocities`: File containing the initial velocities of this stage. If not set, they will be set to the requested temperature. 
 - `box_vectors`: File with replacement periodic box vectors, instead of those in the topology or positions file. Supported file types: XSC.
-- `forcefield`: Which forcefields should be used, if not provided in topology. Needed for PDB topologies.
-- `charmm_parameters`: Parameters for PSF files. Like: *something.par, something.str.*
-- `checkpoint`: Restart simulation from this file. It can provide one or more of the options above. Supported file types: xmlstate, rs.
+- `forcefield`: Which forcefields should be used, if not provided in topology. Needed for PDB topologies and CHARMM PSF.
+- `checkpoint`: Restart simulation from this file. It can provide one or more of the options above. 
 
 ### Output options
+
 - `project_name`: Name for this simulation.
 - `outputpath`: Path to output folder. If relative, it'll be relative to input file. 
 - `report`: True for live report of progress.
@@ -85,16 +89,18 @@ The following keys are available for the input file. They are listed in differen
 - `restart`: Output format for restart formats, if desired
 - `restart_every`: Write restart format every n steps.
 - `save_state_at_end`: Whether to save the state of the simulation at the end of every stage.
+- `attempt_rescue`: Try to dump the simulation state into a file if an exception occurs.
 
 ### General conditions of simulation
-- `minimization`: If *True*, minimize before MD.
+
+- `minimization`: If *True*, minimize before simulating a MD stage.
 - `steps`: Number of MD steps to simulate. If 0, no MD will take place.
 - `timestep`: Integration timestep, in fs. Defaults to 1.0.
-- `temperature`: In Kelvin.
+- `temperature`: In Kelvin. 300 by default.
 - `barostat`: *True* for NPT, *False* for NVT.
 - `pressure`: In bar. Only used if barostat is *True*.
 - `barostat_interval`: Update interval of barostat, in steps.
-- `restrained_atoms`, `constrained_atoms`: Parts of the system that should remain restrained (a force is applied to minimize movement) or constrained (no movement at all) during the simulation. Available values: *all*, *protein*, *protein_no_H*, *backbone*, *calpha*. If *null*, no atoms will be fixed.
+- `restrained_atoms`, `constrained_atoms`: Parts of the system that should remain restrained (a force is applied to minimize movement) or constrained (no movement at all) during the simulation. Supports `mdtraj`'s [DSL queries](http://mdtraj.org/latest/atom_selection.html) or a list of 0-based atom indices.
 - `restraint_strength`: If restraints are in use, the strength of the applied force in kJ/mol. Defaults to 5.0.
 - `integrator`: Which integrator should be used. Langevin by default.
 - `friction`: Friction coefficient for integrator, if needed. In 1/ps. Defaults to 1.0.
@@ -102,18 +108,22 @@ The following keys are available for the input file. They are listed in differen
 - `minimization_max_iterations` : Limit minimization iterations up to this value. If zero, don't limit.
 
 ### OpenMM simulation parameters
+
 - `nonbondedMethod`: Choose between *NoCutoff*, *CutoffNonPeriodic*, *CutoffPeriodic*, *Ewald*, *PME*.
 - `nonbondedCutoff`: In nm. Defaults to 1.0.   
 - `constraints`: Choose between *null*, *HBonds*, *AllBonds*, *HAngles*.
 - `rigidWater`: *True* or *False*.
 - `removeCMMotion`: Whether to remove center of mass motion during simulation. Defaults to *True*.  
 - `hydrogenMass`: The mass to use for hydrogen atoms bound to heavy atoms. Any mass added to a hydrogen is subtracted from the heavy atom to keep their total mass the same.
+- `extra_system_options`: A sub-dict with additional keywords that might be supported by the `.createSystem` method of the topology in use. Check the [OpenMM docs](http://docs.openmm.org/7.1.0/api-python/app.html#loaders-and-setup) to know which ones to use.
 
 ### Hardware options
+
 - `platform`: Which platform to use: *CPU*, *CUDA*, *OpenCL*. If not set, OpenMM will choose the fastest available.
-- `precision`: Precision model to use: *single*, *double* or *mixed*.
+- `platform_properties`: A sub-dict of keyworkds to configure the chosen platform. Check the [OpenMM docs](http://docs.openmm.org/7.1.0/api-python/generated/simtk.openmm.openmm.Platform.html#simtk.openmm.openmm.Platform) to know the supported values. Please notice all values must be strings, even booleans and ints; as a result, you should quote the values like this `'true'`.
 
 ### Stage-only parameters
+
 - `name`: A name for this stage. 
 
 ## Get help
@@ -127,12 +137,13 @@ If you have problems running `ommprotocol`, feel free to [create an issue](https
 Ommprotocol is scientific software, funded by public research grants (Spanish MINECO's project ``CTQ2014-54071-P``, Generalitat de Catalunya's project ``2014SGR989`` and research grant ``2015FI_B00768``, COST Action ``CM1306``). If you make use of Ommprotocol in scientific publications, please cite it. It will help measure the impact of our research and future funding!
 
 ```
-@misc{jaime_rgp_2017_546882,
+@misc{ommprotocol2017,
   author       = {Jaime Rodríguez-Guerra Pedregal and 
                   Daniel Soler and 
-                  Lur Alonso-Cotchico and 
+                  Lur Alonso-Cotchico and
+                  Lorea Velasco and 
                   Jean-Didier Maréchal},
-  title        = {insilichem/ommprotocol: Ommprotocol 0.1.4},
+  title        = {Ommprotocol: A command line application to launch MD protocols with OpenMM},
   month        = apr,
   year         = 2017,
   doi          = {10.5281/zenodo.546882},
