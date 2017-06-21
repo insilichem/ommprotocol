@@ -31,7 +31,7 @@ from simtk import unit as u
 from simtk.openmm.app import (PDBFile, PDBxFile, ForceField, 
                               PDBReporter, PDBxReporter,
                               AmberPrmtopFile, AmberInpcrdFile, 
-                              CharmmPsfFile, CharmmParameterSet,
+                              CharmmPsfFile, CharmmCrdFile, CharmmParameterSet,
                               GromacsTopFile, GromacsGroFile, 
                               DesmondDMSFile, CheckpointReporter)
 from simtk.openmm import XmlSerializer, app as openmm_app
@@ -102,14 +102,19 @@ class MultiFormatLoader(object):
         try:
             return cls._loaders(ext.lstrip('.'))(path, *args, **kwargs)
         except KeyError:
-            raise NotImplementedError('Unknown loader for format {}'.format(ext))
+            print('! Unknown loader for format {}. '
+                  'Trying with ParmEd as fallback'.format(ext))
+            return cls.from_parmed(path, *args, **kwargs)
         except IOError:
             raise IOError('Could not access file {}'.format(path))
 
     @classmethod
     def _loaders(cls, ext):
         raise NotImplementedError('Override this method')
-
+    
+    @classmethod
+    def from_parmed(cls, *args, **kwargs):
+        raise NotImplementedError('ParmEd fallback strategy not available here.')
 
 class InputContainer(object):
 
@@ -295,6 +300,12 @@ class SystemHandler(MultiFormatLoader, InputContainer):
     @classmethod
     def from_desmond(cls, path, **kwargs):
         """
+        Loads a topology from a Desmond DMS file located at `path`.
+
+        Arguments
+        ---------
+        path : str
+            Path to a Desmond DMS file
         """
         dms = DesmondDMSFile(path)
         pos = kwargs.pop('positions', dms.getPositions())
@@ -304,7 +315,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
     @classmethod
     def from_gromacs(cls, path, positions=None, forcefield=None, **kwargs):
         """
-        Loads a topology from a Gromacs TOP file located at `path`.abs
+        Loads a topology from a Gromacs TOP file located at `path`.
 
         Additional root directory for parameters can be specified with `forcefield`.
 
@@ -323,6 +334,24 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         top = GromacsTopFile(path, includeDir=forcefield, periodicBoxVectors=box)
         return cls(master=top, topology=top.topology, positions=positions, box=box,
                    path=path, **kwargs)
+    
+    @classmethod
+    def from_parmed(cls, path, *args, **kwargs):
+        """
+        Try to load a file automatically with ParmEd. Not guaranteed to work, but
+        might be useful if it succeeds.
+
+        Arguments
+        ---------
+        path : str
+            Path to file that ParmEd can load
+        """
+        st = parmed.load_file(path, structure=True, *args, **kwargs)
+        box = kwargs.pop('box', getattr(st, 'box', None))
+        velocities = kwargs.pop('velocities', getattr(st, 'velocities', None))
+        positions = kwargs.pop('positions', getattr(st, 'positions', None))
+        return cls(master=st, topology=st.topology, positions=positions, box=box,
+                   velocities=velocities, path=path, **kwargs)
 
     @classmethod
     def from_pickle(cls, path, positions=None, forcefield=None, **kwargs):
@@ -382,7 +411,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             system = self.master.createSystem(**system_options)
         elif isinstance(self.master, CharmmPsfFile):
             if not hasattr(self.master, 'parmset'):
-                raise ValueError('PSF topology files requiere Charmm parameters.')
+                raise ValueError('PSF topology files require Charmm parameters.')
             system = self.master.createSystem(self.master.parmset, **system_options)
         else:
             raise NotImplementedError('Handler {} is not able to create systems.'.format(self))
@@ -419,31 +448,36 @@ class Positions(MultiFormatLoader):
     @classmethod
     def _loaders(cls, ext):
         return {'pdb': cls.from_pdb,
-                'coor': cls.from_coor,
-                'gro': cls.from_gro,
-                'inpcrd': cls.from_inpcrd,
-                'crd': cls.from_inpcrd}[ext]
+                'coor': cls.from_namd,
+                'gro': cls.from_gromacs,
+                'inpcrd': cls.from_amber,
+                'crd': cls.from_charmm}[ext]
 
     @classmethod
     def from_pdb(cls, path):
-        pdb = PDBFile(path)
-        return pdb.positions
+        return PDBFile(path).positions
 
     @classmethod
-    def from_coor(cls, path):
+    def from_namd(cls, path):
         coor = NamdBinCoor.read(path)
         positions = u.Quantity(coor.coordinates[0], unit=u.angstroms)
         return positions
 
     @classmethod
-    def from_inpcrd(cls, path):
-        inpcrd = AmberInpcrdFile(path)
-        return inpcrd.positions
+    def from_amber(cls, path):
+        return AmberInpcrdFile(path).positions
 
     @classmethod
-    def from_gro(cls, path):
-        gro = GromacsGroFile(path)
-        return gro.getPositions()
+    def from_gromacs(cls, path):
+        return GromacsGroFile(path).getPositions()
+
+    @classmethod
+    def from_charmm(cls, path):
+        return CharmmCrdFile(path).positions
+
+    @classmethod
+    def from_parmed(cls, path):
+        return parmed.load_file(path, structure=True).positions
 
 
 class Velocities(MultiFormatLoader):
@@ -463,13 +497,17 @@ class Velocities(MultiFormatLoader):
 
     @classmethod
     def _loaders(cls, ext):
-        return {'vel': cls.from_vel}[ext]
+        return {'vel': cls.from_namd}[ext]
 
     @classmethod
-    def from_vel(cls, path):
+    def from_namd(cls, path):
         vel = NamdBinVel.read(path)
         velocities = u.Quantity(vel.velocities[0], unit=u.angstroms/u.picosecond)
         return velocities
+    
+    @classmethod
+    def from_parmed(cls, path):
+        return parmed.load_file(path, structure=True).velocities
 
 
 class BoxVectors(MultiFormatLoader):
@@ -493,8 +531,7 @@ class BoxVectors(MultiFormatLoader):
                 'csv': cls.from_csv,
                 'pdb': cls.from_pdb,
                 'gro': cls.from_gro,
-                'inpcrd': cls.from_inpcrd,
-                'crd': cls.from_inpcrd}[ext]
+                'inpcrd': cls.from_inpcrd}[ext]
 
     @classmethod
     def from_xsc(cls, path):
@@ -553,21 +590,26 @@ class BoxVectors(MultiFormatLoader):
             return u.Quantity([fields[0:3],
                                fields[3:6],
                                fields[6:9]], unit=u.nanometers)
+        else:
+            raise ValueError('This type of CSV is not supported. Please '
+                             'provide a comma-separated list of three or nine '
+                             'floats in a single-line file.')
 
     @classmethod
     def from_pdb(cls, path):
-        pdb = PDBFile(path)
-        return pdb.topology.getPeriodicBoxVectors()
+        return PDBFile(path).topology.getPeriodicBoxVectors()
 
     @classmethod
-    def from_inpcrd(cls, path):
-        inpcrd = AmberInpcrdFile(path)
-        return inpcrd.boxVectors
+    def from_amber(cls, path):
+        return AmberInpcrdFile(path).boxVectors
 
     @classmethod
-    def from_gro(cls, path):
-        gro = GromacsGroFile(path)
-        return gro.getPositions()
+    def from_gromacs(cls, path):
+        return GromacsGroFile(path).getPeriodicBoxVectors()
+    
+    @classmethod
+    def from_parmed(cls, path):
+        return parmed.load_file(path, structure=True, hasbox=True).box
 
 
 class Restart(MultiFormatLoader, InputContainer):
@@ -586,6 +628,14 @@ class Restart(MultiFormatLoader, InputContainer):
     velocities : simtk.unit.Quantity([atoms,3])
     vectors : simtk.unit.Quantity([1,3])
     """
+    @classmethod
+    def _loaders(cls, ext):
+        return {'xml': cls.from_xml,
+                'xmlstate': cls.from_xml,
+                'state': cls.from_xml,
+                'rs': cls.from_rst,
+                'rst': cls.from_rst,
+                'restart': cls.from_rst}[ext]
 
     @classmethod
     def from_xml(cls, path):
@@ -609,15 +659,11 @@ class Restart(MultiFormatLoader, InputContainer):
                        [0, 0, rst.cell_lengths[2]]]
             box = u.Quantity(vectors, unit=u.angstrom)
         return cls(positions=positions, velocities=velocities, box=box)
-
+    
     @classmethod
-    def _loaders(cls, ext):
-        return {'xml': cls.from_xml,
-                'xmlstate': cls.from_xml,
-                'state': cls.from_xml,
-                'rs': cls.from_rst,
-                'rst': cls.from_rst,
-                'restart': cls.from_rst}[ext]
+    def from_parmed(cls, path):
+        st = parmed.load_file(path)
+        return cls(positions=st.positions, velocities=st.velocities, box=st.box)
 
 
 class ProgressBarReporter(object):
