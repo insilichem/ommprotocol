@@ -71,13 +71,22 @@ def available_platforms():
     return names
 
 
+def available_platforms_properties():
+    for i in range(1, mm.Platform.getNumPlatforms()):
+        platform = mm.Platform.getPlatform(i)
+        name = platform.getName()
+        print('{}\n{}'.format(name, '-'*len(name)))
+        for prop in platform.getPropertyNames():
+            value = platform.getPropertyDefaultValue(prop)
+            print(prop, '(default={!r})'.format(value) if value else '')
+        print()
+
+
 def extant_file(path):
     """
-    'Type' for argparse - checks that file exists but does not open.
+    Check if file exists with argparse
     """
     if not os.path.exists(path):
-        # Argparse uses the ArgumentTypeError to give a rejection message like:
-        # error: argument input: x does not exist
         raise argparse.ArgumentTypeError("{} does not exist".format(path))
     return path
 
