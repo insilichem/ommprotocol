@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#################################################
-#           insiliChem OpenMM launcher          #
-# --------------------------------------------- #
-# By Jaime RGP <jaime@insilichem.com> @ 2016    #
-#################################################
+# ommprotocol: A command line application to launch
+#              MD protocols with OpenMM
+# By Jaime RGP <@jaimergp>
 
 import os
 import sys

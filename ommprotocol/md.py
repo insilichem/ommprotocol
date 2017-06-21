@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#################################################
-#           insiliChem OpenMM launcher          #
-# --------------------------------------------- #
-# By Jaime RGP <jaime@insilichem.com> @ 2016    #
-#################################################
+# ommprotocol: A command line application to launch
+#              MD protocols with OpenMM
+# By Jaime RGP <@jaimergp>
+
+"""
+ommprotocol.md
+--------------
+
+All the logic that governs the simulation of a MD protocol,
+stage by stage.
+
+A protocol is a chained list of stages, which are Stage instances.
+"""
 
 # Stdlib
 from __future__ import print_function, division

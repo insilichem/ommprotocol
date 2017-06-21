@@ -1,18 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#################################################
-#           insiliChem OpenMM launcher          #
-# --------------------------------------------- #
-# By Jaime RGP <jaime@insilichem.com> @ 2016    #
-#################################################
+# ommprotocol: A command line application to launch
+#              MD protocols with OpenMM
+# By Jaime RGP <@jaimergp>
 
 """
 ommprotocol.io
 --------------
 
-Handle IO stuff
+IO stuff:
+
+- Parser logic for YAML input files
+- Handlers for source topologies, coordinates, velocities,
+box vectors and restart checkpoints, and all the business
+logic to deal with the precedence of those files.
+- Output reporters for stdout and segmented DCD trajectories.
 """
+
 # Python stdlib
 from __future__ import print_function, division, absolute_import
 import os
