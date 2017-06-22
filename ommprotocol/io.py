@@ -535,8 +535,8 @@ class BoxVectors(MultiFormatLoader):
         return {'xsc': cls.from_xsc,
                 'csv': cls.from_csv,
                 'pdb': cls.from_pdb,
-                'gro': cls.from_gro,
-                'inpcrd': cls.from_inpcrd}[ext]
+                'gro': cls.from_gromacs,
+                'inpcrd': cls.from_amber}[ext]
 
     @classmethod
     def from_xsc(cls, path):
