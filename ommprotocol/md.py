@@ -264,8 +264,9 @@ class Stage(object):
             status = '#{}'.format(self._stage_number[0])
             if self.total_stages is not None:
                 status += '/{}'.format(self.total_stages)
-            status += ': {} @ {}K'.format(self.name, self.temperature)
-            status += ', NPT' if self.barostat else ', NVT'
+            if self.steps:
+                status += ': {} @ {}K'.format(self.name, self.temperature)
+                status += ', NPT' if self.barostat else ', NVT'
             if self.restrained_atoms:
                 status += ' [Restrained {}]'.format(self.restrained_atoms)
             elif self.constrained_atoms:
