@@ -264,9 +264,7 @@ class Stage(object):
             status = '#{}'.format(self._stage_number[0])
             if self.total_stages is not None:
                 status += '/{}'.format(self.total_stages)
-            if self.steps:
-                status += ': {} @ {}K'.format(self.name, self.temperature)
-                status += ', NPT' if self.barostat else ', NVT'
+            status += ': {}'.format(self.name)
             if self.restrained_atoms:
                 status += ' [Restrained {}]'.format(self.restrained_atoms)
             elif self.constrained_atoms:
@@ -306,7 +304,10 @@ class Stage(object):
             # MD simulation
             if self.verbose:
                 pbc = 'PBC ' if self.system.usesPeriodicBoundaryConditions() else ''
-                print('  Running {}MD for {} steps'.format(pbc, self.steps))
+                conditions = 'NPT' if self.barostat else 'NVT'
+                print('  Running {}MD for {} steps @ {}K, {}'.format(pbc, self.steps, 
+                                                                     self.temperature, 
+                                                                     conditions))
 
             with self.handle_exceptions():
                 self.simulate()
