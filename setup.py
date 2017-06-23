@@ -38,7 +38,7 @@ setup(
     entry_points='''
         [console_scripts]
         ommprotocol=ommprotocol:run_protocol
-        ommanalyze:ommprotocol.analyze:main
+        ommanalyze=ommprotocol.analyze:main
         state2pdb=ommprotocol:state_to_pdb
         exportframe=ommprotocol:export_frame
     ''',
