@@ -454,10 +454,9 @@ class Stage(object):
             system.setParticleMass(int(i), 0.0)
 
     def apply_restraints(self):
-        force = self.restrain_force(self.restraint_strength)
+        force = self.restraint_force(self.restraint_strength)
         indices = self.subset(self.restrained_atoms)
-        positions = self.positions if self.positions is not None else self.handler.positions
-        self.apply_force(self.handler.topology, positions, force, indices)
+        self.apply_force(force, indices)
 
     @property
     def progress_reporter(self):
@@ -557,15 +556,15 @@ class Stage(object):
         system_mass = sum(a.element.mass._value for a in self.handler.topology.atoms())
         return system_mass * u.dalton
 
-    @staticmethod
-    def apply_force(topology, positions, force, indices=None):
+    def apply_force(self, force, indices=None):
+        positions = self.positions if self.positions is not None else self.handler.positions
         if indices is None:
-            indices = range(topology.getNumAtoms())
-        for i in indices:
-            force.addParticle(i, positions[i].value_in_unit(u.nanometers))
+            indices = range(self.handler.topology.getNumAtoms())
+        for i, index in enumerate(indices):
+            force.addParticle(i, positions[index].value_in_unit(u.nanometers))
 
     @staticmethod
-    def restrain_force(strength=5.0):
+    def restraint_force(strength=5.0):
         """
         Force that restrains atoms to fix their positions, while allowing
         tiny movement to resolve severe clashes and so on.
