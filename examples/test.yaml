@@ -22,7 +22,7 @@ restart_every: 1e6
 save_state_at_end: True
 
 platform: CUDA
-extra_platform_options:
+platform_properties:
     Precision: single
 
 # conditions

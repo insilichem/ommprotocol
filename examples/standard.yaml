@@ -23,7 +23,7 @@ save_state_at_end: True
 
 # # hardware
 platform: CUDA
-extra_platform_options:
+platform_properties:
     Precision: mixed
 
 # conditions
