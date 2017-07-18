@@ -283,7 +283,8 @@ class Stage(object):
             if self.verbose:
                 print('  Minimizing...')
             self.minimize()
-
+        
+        uses_pbc = self.system.usesPeriodicBoundaryConditions()
         if self.steps:
             # Stdout progress
             if self.report and self.progress_reporter not in self.simulation.reporters:
@@ -303,7 +304,7 @@ class Stage(object):
 
             # MD simulation
             if self.verbose:
-                pbc = 'PBC ' if self.system.usesPeriodicBoundaryConditions() else ''
+                pbc = 'PBC ' if uses_pbc else ''
                 conditions = 'NPT' if self.barostat else 'NVT'
                 print('  Running {}MD for {} steps @ {}K, {}'.format(pbc, self.steps, 
                                                                      self.temperature, 
@@ -317,7 +318,6 @@ class Stage(object):
             self.simulation.saveState(path)
 
         # Save and return state
-        uses_pbc = self.system.usesPeriodicBoundaryConditions()
         state = self.simulation.context.getState(getPositions=True, getVelocities=True,
                                                  enforcePeriodicBox=uses_pbc)
 
