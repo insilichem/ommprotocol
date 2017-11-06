@@ -33,11 +33,11 @@ try:
 except ImportError:
     from ruamel import yaml
 from simtk import unit as u
-from simtk.openmm.app import (PDBFile, PDBxFile, ForceField, 
+from simtk.openmm.app import (PDBFile, PDBxFile, ForceField,
                               PDBReporter, PDBxReporter,
-                              AmberPrmtopFile, AmberInpcrdFile, 
+                              AmberPrmtopFile, AmberInpcrdFile,
                               CharmmPsfFile, CharmmCrdFile, CharmmParameterSet,
-                              GromacsTopFile, GromacsGroFile, 
+                              GromacsTopFile, GromacsGroFile,
                               DesmondDMSFile, CheckpointReporter)
 from simtk.openmm import XmlSerializer, app as openmm_app
 import mdtraj
@@ -116,7 +116,7 @@ class MultiFormatLoader(object):
     @classmethod
     def _loaders(cls, ext):
         raise NotImplementedError('Override this method')
-    
+
     @classmethod
     def from_parmed(cls, *args, **kwargs):
         raise NotImplementedError('ParmEd fallback strategy not available here.')
@@ -244,7 +244,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
 
         return cls(master=pdb.forcefield, topology=pdb.topology, positions=positions,
                    velocities=velocities, box=box, path=path, **kwargs)
-    
+
     @classmethod
     def from_pdbx(cls, *args, **kwargs):
         __doc__ = cls.from_pdb.__doc__
@@ -301,7 +301,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         psf.loadParameters(psf.parmset)
         return cls(master=psf, topology=psf.topology, positions=positions, path=path,
                    **kwargs)
-    
+
     @classmethod
     def from_desmond(cls, path, **kwargs):
         """
@@ -314,7 +314,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         """
         dms = DesmondDMSFile(path)
         pos = kwargs.pop('positions', dms.getPositions())
-        return cls(master=dms, topology=dms.getTopology(), positions=pos, path=path, 
+        return cls(master=dms, topology=dms.getTopology(), positions=pos, path=path,
                    **kwargs)
 
     @classmethod
@@ -339,7 +339,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         top = GromacsTopFile(path, includeDir=forcefield, periodicBoxVectors=box)
         return cls(master=top, topology=top.topology, positions=positions, box=box,
                    path=path, **kwargs)
-    
+
     @classmethod
     def from_parmed(cls, path, *args, **kwargs):
         """
@@ -509,7 +509,7 @@ class Velocities(MultiFormatLoader):
         vel = NamdBinVel.read(path)
         velocities = u.Quantity(vel.velocities[0], unit=u.angstroms/u.picosecond)
         return velocities
-    
+
     @classmethod
     def from_parmed(cls, path):
         return parmed.load_file(path, structure=True).velocities
@@ -611,7 +611,7 @@ class BoxVectors(MultiFormatLoader):
     @classmethod
     def from_gromacs(cls, path):
         return GromacsGroFile(path).getPeriodicBoxVectors()
-    
+
     @classmethod
     def from_parmed(cls, path):
         return parmed.load_file(path, structure=True, hasbox=True).box
@@ -664,7 +664,7 @@ class Restart(MultiFormatLoader, InputContainer):
                        [0, 0, rst.cell_lengths[2]]]
             box = u.Quantity(vectors, unit=u.angstrom)
         return cls(positions=positions, velocities=velocities, box=box)
-    
+
     @classmethod
     def from_parmed(cls, path):
         st = parmed.load_file(path)
@@ -847,7 +847,7 @@ def prepare_handler(cfg):
     if 'box' in cfg:
         box_path = sanitize_path_for_file(cfg.pop('box'), _path)
         box = BoxVectors.load(box_path)
-    
+
     options = {}
     for key in 'positions velocities box forcefield'.split():
         value = locals()[key]
@@ -866,7 +866,7 @@ def prepare_system_options(cfg, fill_not_found=True):
     if fill_not_found:
         d['nonbondedMethod'] = warned_getattr(openmm_app, cfg.pop('nonbondedMethod', NONBONDEDMETHODS.get('nonbondedMethod')), None)
         d['nonbondedCutoff'] = cfg.pop('nonbondedCutoff', None) * u.nanometers
-        d['constraints'] = warned_getattr(openmm_app, cfg.pop('constraints', None), None)
+        d['constraints'] = warned_getattr(openmm_app, cfg.pop('constraints', ''), None)
         for key in ['rigidWater', 'ewaldErrorTolerance']:
             d[key] = cfg.pop(key, None)
     else:
