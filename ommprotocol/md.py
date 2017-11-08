@@ -27,7 +27,7 @@ from simtk import openmm as mm
 from simtk.openmm import app
 from mdtraj import Topology as MDTrajTopology
 # Own
-from .io import REPORTERS, ProgressBarReporter, prepare_system_options
+from .io import REPORTERS, ProgressBarReporter, SerializedReporter, prepare_system_options
 from .utils import random_string, assert_not_exists, timed_input, available_platforms, warned_getattr
 
 logger = logging.getLogger(__name__)
@@ -464,6 +464,9 @@ class Stage(object):
     @property
     def progress_reporter(self):
         if self._progress_reporter is None:
+            if os.environ.get('OMMPROTOCOL_SLAVE'):
+                rep = SerializedReporter(sys.stdout, self.report_every)
+            else:
             rep = ProgressBarReporter(sys.stdout, self.report_every, total_steps=self.steps)
             self._progress_reporter = rep
         return self._progress_reporter

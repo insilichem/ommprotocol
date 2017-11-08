@@ -242,7 +242,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         if not forcefield:
             from .md import FORCEFIELDS as forcefield
             logger.info('INFO: Forcefields for PDB not specified. Using default:\n %s',
-                  ', '.join(forcefield))
+                        ', '.join(forcefield))
         pdb.forcefield = ForceField(*list(process_forcefield(*forcefield)))
 
         return cls(master=pdb.forcefield, topology=pdb.topology, positions=positions,
@@ -756,6 +756,81 @@ class ProgressBarReporter(object):
             template = '{}{}/{} steps ({:.1f}%)                                              \r'
         report = template.format(margin, steps, self.total_steps, percentage, remaining, ns_day)
         self._out.write(report)
+        if hasattr(self._out, 'flush'):
+            self._out.flush()
+
+    def __del__(self):
+        self._out.write('\n')
+        if self._own_handle:
+            self._out.close()
+
+
+class SerializedReporter(object):
+
+    """
+    Report progress and state in a serialized format,
+    enabling inter-process reporting.
+
+    Parameters
+    ----------
+    file : string or open file object
+        The file to write to. Normally stdout. Will overwrite!
+    interval : int
+        The interval (in time steps) at which to write checkpoints.
+    """
+
+    _steps = [0]
+
+    def __init__(self, file, interval):
+        if isinstance(file, str):
+            self._own_handle = True
+            self._out = open(file, 'w', 0)
+        else:
+            self._out = file
+            self._own_handle = False
+
+        self.interval = interval
+        self._initialized = False
+
+    def describeNextReport(self, simulation):
+        """Get information about the next report this object will generate.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+
+        Returns
+        -------
+        tuple
+            A five element tuple. The first element is the number of steps
+            until the next report. The remaining elements specify whether
+            that report will require positions, velocities, forces, and
+            energies respectively.
+        """
+        steps = self.interval - simulation.currentStep % self.interval
+        return steps, True, False, False, False
+
+    def report(self, simulation, state):
+        """Generate a report.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+        state : State
+            The current state of the simulation
+        """
+        if not self._initialized:
+            self._initialized = True
+
+        self._steps[0] += self.interval
+        positions = state.getPositions()
+
+        # Serialize
+        self._out.write(b''.join([b'\nSTARTOFCHUNK\n',
+                                  pickle.dumps([self._steps[0], positions._value]),
+                                  b'\nENDOFCHUNK\n']))
         if hasattr(self._out, 'flush'):
             self._out.flush()
 

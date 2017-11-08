@@ -12,6 +12,9 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
+if not os.environ.get('OMMPROTOCOL_SLAVE'):
+    logging.basicConfig()
+
 from ommprotocol.io import prepare_input, statexml2pdb, export_frame_coordinates
 from ommprotocol.md import protocol
 from ._version import get_versions
