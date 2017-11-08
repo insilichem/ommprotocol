@@ -42,7 +42,7 @@ def plot_rmsd(topology, trajectory):
 def main():
     p = argparse.ArgumentParser()
     sp = p.add_subparsers()
-    
+
     # 'log' subcommand
     p_log = sp.add_parser('log', help='Plot .log reports')
     p_log.add_argument('paths', type=extant_file, nargs='+')
@@ -51,7 +51,7 @@ def main():
     # 'rmsd' subcommand
     p_rmsd = sp.add_parser('rmsd', help='Plot RMSD of a trajectory')
     p_rmsd.add_argument('topology', help='Topology file', type=extant_file)
-    p_rmsd.add_argument('trajectory', help='Trajectory file', type=extant_file, 
+    p_rmsd.add_argument('trajectory', help='Trajectory file', type=extant_file,
                         nargs='+')
     p_rmsd.set_defaults(func=plot_rmsd)
 
