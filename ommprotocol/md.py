@@ -175,6 +175,9 @@ class Stage(object):
         Interval of steps at which barostat updates. Defaults to 25 steps.
     save_state_at_end : bool, optional
         Whether to create a state.xml file at the end of the stage or not.
+    attempt_rescue : bool, optional
+        Whether to try to generate an emergency state file if an exception
+        is raised.
     total_stages : int, optional
     """
     _PROJECTNAME = random_string(length=5)
