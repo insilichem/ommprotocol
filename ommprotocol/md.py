@@ -20,6 +20,7 @@ from __future__ import print_function, division
 import os
 import sys
 from contextlib import contextmanager
+import logging
 # 3rd party
 from simtk import unit as u
 from simtk import openmm as mm
@@ -28,6 +29,8 @@ from mdtraj import Topology as MDTrajTopology
 # Own
 from .io import REPORTERS, ProgressBarReporter, prepare_system_options
 from .utils import random_string, assert_not_exists, timed_input, available_platforms, warned_getattr
+
+logger = logging.getLogger(__name__)
 
 ###########################
 # Defaults
@@ -192,7 +195,7 @@ class Stage(object):
                  **kwargs):
         for k in kwargs:
             if not k.startswith('_'):
-                print('Option {} not recognized!'.format(k))
+                logger.warning('Option %s not recognized!', k)
 
         # System properties
         self.handler = handler
@@ -269,7 +272,7 @@ class Stage(object):
                 status += ' [Restrained {}]'.format(self.restrained_atoms)
             elif self.constrained_atoms:
                 status += ' [Constrained {}]'.format(self.constrained_atoms)
-            print(status)
+            logger.info(status)
 
         # Add forces
         if self.restrained_atoms:
@@ -281,7 +284,7 @@ class Stage(object):
 
         if self.minimization:
             if self.verbose:
-                print('  Minimizing...')
+                logger.info('  Minimizing...')
             self.minimize()
         
         uses_pbc = self.system.usesPeriodicBoundaryConditions()
@@ -306,7 +309,7 @@ class Stage(object):
             if self.verbose:
                 pbc = 'PBC ' if uses_pbc else ''
                 conditions = 'NPT' if self.barostat else 'NVT'
-                print('  Running {}MD for {} steps @ {}K, {}'.format(pbc, self.steps, 
+                logger.info('  Running {}MD for {} steps @ {}K, {}'.format(pbc, self.steps,
                                                                      self.temperature, 
                                                                      conditions))
 
@@ -346,7 +349,7 @@ class Stage(object):
     def system(self):
         if self._system is None:
             if self.constrained_atoms and self.system_options.pop('constraints', None):
-                print('  Warning: `constraints` and `constrained_atoms` are incompatible. '
+                logger.warning('  Warning: `constraints` and `constrained_atoms` are incompatible. '
                       'Removing `constraints` option for this stage.')
             self._system = self.handler.create_system(**self.system_options)
         return self._system
@@ -429,7 +432,7 @@ class Stage(object):
         if str(device).startswith('ENV_'):
             envvar = os.environ.get(device[4:], None)
             if envvar is not None:
-                print('Warning: Setting DeviceIndex from env var', device[4:], 'to', envvar)
+                logger.warning('Setting DeviceIndex from env var %s to %s', device[4:], envvar)
                 self.platform_properties['DeviceIndex'] = envvar
 
         return platform, self.platform_properties
@@ -607,17 +610,17 @@ class Stage(object):
                         sys.exit('Ok, bye!')
             else:
                 reraise = True
-                print('\n\nAn error occurred: {}'.format(ex))
+                logger.error('\n\nAn error occurred: %s', ex)
             if verbose:
-                print('Saving state...')
+                logger.info('Saving state...')
             try:
                 self.backup_simulation()
             except Exception:
                 if verbose:
-                    print('FAILED :(')
+                    logger.error('FAILED :(')
             else:
                 if verbose:
-                    print('SUCCESS!')
+                    logger.info('SUCCESS!')
             finally:
                 if reraise:
                     raise ex

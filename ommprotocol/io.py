@@ -27,6 +27,7 @@ from collections import namedtuple
 from argparse import ArgumentParser
 from datetime import datetime, timedelta
 from functools import partial
+import logging
 # OpenMM and 3rd party helpers
 try:
     import ruamel_yaml as yaml
@@ -54,6 +55,8 @@ del get_versions
 
 if sys.version_info.major == 3:
     basestring = str
+
+logger = logging.getLogger(__name__)
 
 
 class YamlLoader(yaml.Loader):
@@ -107,8 +110,8 @@ class MultiFormatLoader(object):
         try:
             return cls._loaders(ext.lstrip('.'))(path, *args, **kwargs)
         except KeyError:
-            print('! Unknown loader for format {}. '
-                  'Trying with ParmEd as fallback'.format(ext))
+            logger.error('! Unknown loader for format %s. '
+                         'Trying with ParmEd as fallback', ext)
             return cls.from_parmed(path, *args, **kwargs)
         except IOError:
             raise IOError('Could not access file {}'.format(path))
@@ -238,7 +241,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
 
         if not forcefield:
             from .md import FORCEFIELDS as forcefield
-            print('INFO: Forcefields for PDB not specified. Using default:\n ',
+            logger.info('INFO: Forcefields for PDB not specified. Using default:\n %s',
                   ', '.join(forcefield))
         pdb.forcefield = ForceField(*list(process_forcefield(*forcefield)))
 
