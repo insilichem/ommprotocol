@@ -286,7 +286,7 @@ class Stage(object):
             if self.verbose:
                 logger.info('  Minimizing...')
             self.minimize()
-        
+
         uses_pbc = self.system.usesPeriodicBoundaryConditions()
         if self.steps:
             # Stdout progress
@@ -310,7 +310,7 @@ class Stage(object):
                 pbc = 'PBC ' if uses_pbc else ''
                 conditions = 'NPT' if self.barostat else 'NVT'
                 logger.info('  Running {}MD for {} steps @ {}K, {}'.format(pbc, self.steps,
-                                                                     self.temperature, 
+                                                                     self.temperature,
                                                                      conditions))
 
             with self.handle_exceptions():
@@ -350,7 +350,7 @@ class Stage(object):
         if self._system is None:
             if self.constrained_atoms and self.system_options.pop('constraints', None):
                 logger.warning('  Warning: `constraints` and `constrained_atoms` are incompatible. '
-                      'Removing `constraints` option for this stage.')
+                               'Removing `constraints` option for this stage.')
             self._system = self.handler.create_system(**self.system_options)
         return self._system
 
@@ -467,7 +467,7 @@ class Stage(object):
             if os.environ.get('OMMPROTOCOL_SLAVE'):
                 rep = SerializedReporter(sys.stdout, self.report_every)
             else:
-            rep = ProgressBarReporter(sys.stdout, self.report_every, total_steps=self.steps)
+                rep = ProgressBarReporter(sys.stdout, self.report_every, total_steps=self.steps)
             self._progress_reporter = rep
         return self._progress_reporter
 
@@ -608,7 +608,7 @@ class Stage(object):
             if isinstance(ex, KeyboardInterrupt):
                 reraise = False
                 answer = timed_input('\n\nDo you want to save current state? (y/N): ')
-                if answer.lower() not in ('y', 'yes'):
+                if answer and answer.lower() not in ('y', 'yes'):
                     if verbose:
                         sys.exit('Ok, bye!')
             else:
