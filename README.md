@@ -1,6 +1,7 @@
 ommprotocol
 ===========
 
+[![Build Status](https://travis-ci.org/insilichem/ommprotocol.svg?branch=master)](https://travis-ci.org/insilichem/ommprotocol)
 [![DOI](https://zenodo.org/badge/50431234.svg)](https://zenodo.org/badge/latestdoi/50431234)
 
 A command line application to launch MD protocols with OpenMM
@@ -57,7 +58,7 @@ Quick launch:
 
 All input configuration is done through YAML files. A couple of sample inputs are included in [`examples`](examples/) folder; parameters should be self-explaining.
 
-There's two main parts in these files: 
+There's two main parts in these files:
 
 * Top-level parameters: listed in next section, they are common for all stages
 * `stages`: Contains a list with all the stages to be simulated in the requested order. Each stage can override one or more global parameter(s), if needed.
@@ -72,15 +73,15 @@ The following keys are available for the input file. They are listed in differen
 
 - `topology`: Main input file. Should contain, at least, the topology, but it can also contain positions, velocities, PBC vectors, forcefields...
 - `positions`: File with the initial coordinates of the system. Overrides those in topology, if needed.
-- `velocities`: File containing the initial velocities of this stage. If not set, they will be set to the requested temperature. 
+- `velocities`: File containing the initial velocities of this stage. If not set, they will be set to the requested temperature.
 - `box_vectors`: File with replacement periodic box vectors, instead of those in the topology or positions file. Supported file types: XSC.
 - `forcefield`: Which forcefields should be used, if not provided in topology. Needed for PDB topologies and CHARMM PSF.
-- `checkpoint`: Restart simulation from this file. It can provide one or more of the options above. 
+- `checkpoint`: Restart simulation from this file. It can provide one or more of the options above.
 
 ### Output options
 
 - `project_name`: Name for this simulation.
-- `outputpath`: Path to output folder. If relative, it'll be relative to input file. 
+- `outputpath`: Path to output folder. If relative, it'll be relative to input file.
 - `report`: True for live report of progress.
 - `report_every`: Update interval of live progress reports.
 - `trajectory`: Output format of trajectory file, if desired.
@@ -110,10 +111,10 @@ The following keys are available for the input file. They are listed in differen
 ### OpenMM simulation parameters
 
 - `nonbondedMethod`: Choose between *NoCutoff*, *CutoffNonPeriodic*, *CutoffPeriodic*, *Ewald*, *PME*.
-- `nonbondedCutoff`: In nm. Defaults to 1.0.   
+- `nonbondedCutoff`: In nm. Defaults to 1.0.
 - `constraints`: Choose between *null*, *HBonds*, *AllBonds*, *HAngles*.
 - `rigidWater`: *True* or *False*.
-- `removeCMMotion`: Whether to remove center of mass motion during simulation. Defaults to *True*.  
+- `removeCMMotion`: Whether to remove center of mass motion during simulation. Defaults to *True*.
 - `hydrogenMass`: The mass to use for hydrogen atoms bound to heavy atoms. Any mass added to a hydrogen is subtracted from the heavy atom to keep their total mass the same.
 - `extra_system_options`: A sub-dict with additional keywords that might be supported by the `.createSystem` method of the topology in use. Check the [OpenMM docs](http://docs.openmm.org/7.1.0/api-python/app.html#loaders-and-setup) to know which ones to use.
 
@@ -124,7 +125,7 @@ The following keys are available for the input file. They are listed in differen
 
 ### Stage-only parameters
 
-- `name`: A name for this stage. 
+- `name`: A name for this stage.
 
 ## Get help
 
@@ -138,10 +139,10 @@ Ommprotocol is scientific software, funded by public research grants (Spanish MI
 
 ```
 @misc{ommprotocol2017,
-  author       = {Jaime Rodríguez-Guerra Pedregal and 
-                  Daniel Soler and 
+  author       = {Jaime Rodríguez-Guerra Pedregal and
+                  Daniel Soler and
                   Lur Alonso-Cotchico and
-                  Lorea Velasco and 
+                  Lorea Velasco and
                   Jean-Didier Maréchal},
   title        = {Ommprotocol: A command line application to launch MD protocols with OpenMM},
   month        = apr,
