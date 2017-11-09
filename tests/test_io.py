@@ -10,9 +10,9 @@ from ommprotocol.io import SystemHandler, Positions
 from ommprotocol.md import Stage
 from conftest import get_file
 
-STAGE_OPTIONS = dict(steps=100, 
-                     minimization=False, 
-                     barostat=False, 
+STAGE_OPTIONS = dict(steps=100,
+                     minimization=False,
+                     barostat=False,
                      verbose=False,
                      trajectory_every=0,
                      restart_every=0,
@@ -24,7 +24,7 @@ STAGE_OPTIONS = dict(steps=100,
 @pytest.mark.parametrize("top, pos", [
     ('input.pdb', None),
     ('input.prmtop', 'input.inpcrd'),
-    ('input.top', 'input.gro')
+    # ('input.top', 'input.gro')
 ])
 def test_formats(top, pos):
     top = get_file(top)
