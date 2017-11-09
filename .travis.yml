@@ -84,12 +84,13 @@ install:
 # Configure conda and get a few essentials
 - conda config --set always_yes yes
 # Show conda info for debugging
+- conda install -q conda
 - conda info -a
 
 # Dependencies
 - conda env create -f environment.yml
 - source activate ommprotocol
-- conda install -q conda pytest
+- conda install -q pytest
 - python setup.py install
 
 script:
