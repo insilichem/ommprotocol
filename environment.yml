@@ -1,0 +1,10 @@
+name: ommprotocol
+channels:
+- omnia
+dependencies:
+- python
+- openmm
+- ruamel_yaml
+- parmed
+- openmoltools
+- mdtraj
