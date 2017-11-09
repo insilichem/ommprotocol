@@ -88,7 +88,7 @@ install:
 - conda info -a
 
 # Dependencies
-- conda env create -f environment.yml
+- conda env create -f environment.yml || conda env update -n ommprotocol -f environment.yml
 - source activate ommprotocol
 - conda install -q pytest
 - python setup.py install
