@@ -92,6 +92,8 @@ install:
 - source activate ommprotocol
 - conda install -q pytest
 - python setup.py install
+# Show currently installed packages
+- conda list
 
 script:
 - cd tests
