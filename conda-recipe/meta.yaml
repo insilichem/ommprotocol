@@ -23,7 +23,7 @@ requirements:
     - parmed
     - openmoltools
     - mdtraj
-
+#   - gromacs
 test:
   imports:
     - ommprotocol

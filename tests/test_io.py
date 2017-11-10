@@ -24,7 +24,7 @@ STAGE_OPTIONS = dict(steps=100,
 @pytest.mark.parametrize("top, pos", [
     ('input.pdb', None),
     ('input.prmtop', 'input.inpcrd'),
-    # ('input.top', 'input.gro')
+    ('input.top', 'input.gro')
 ])
 def test_formats(top, pos):
     top = get_file(top)

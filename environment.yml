@@ -1,6 +1,7 @@
 name: ommprotocol
 channels:
 - omnia
+- bioconda
 dependencies:
 - python
 - openmm
@@ -8,3 +9,4 @@ dependencies:
 - parmed
 - openmoltools
 - mdtraj
+- gromacs
