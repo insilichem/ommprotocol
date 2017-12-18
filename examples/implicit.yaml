@@ -5,7 +5,7 @@ topology: example.pdb
 # positions: sys.crd
 # velocities: blablabla.vel
 # box: blablabla.xsc
-forcefield: [amber99sbildn, amber99_obc] # only for PDB
+forcefield: [amber99sbildn.xml, amber99_obc.xml] # only for PDB
 # charmm_parameters: [something.par, something.str] # only for PSF
 # checkpoint: blablabla.state.xml
 
@@ -42,7 +42,7 @@ nonbondedCutoff: 1.0 # nm
 constraints: HBonds
 rigidWater: True
 extra_system_options:
-        implicitSolvent: GBn2
+    implicitSolvent: GBn2
 
 stages:
     -   name: implicit

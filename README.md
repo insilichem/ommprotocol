@@ -45,6 +45,12 @@ Installation
         conda create -n openmm ommprotocol
         source activate openmm
 
+    Or, if there's no package for your platform, install the conda packages separately and then install `ommprotocol` from pip or source.
+
+        conda create -n openmm -c omnia openmm ruamel_yaml parmed openmoltools mdtraj
+        pip install ommprotocol
+        # dev version: pip install https://github.com/insilichem/ommprotocol/archive/master.zip
+
 4. If everything is OK, this sould run correctly.
 
         ommprotocol -h
