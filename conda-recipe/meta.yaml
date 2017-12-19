@@ -23,7 +23,16 @@ requirements:
     - parmed
     - openmoltools
     - mdtraj
-#   - gromacs
+    - netcdf4
+
 test:
+  requires:
+    - gromacs
+    - pytest
+
   imports:
     - ommprotocol
+
+  commands:
+    - ommprotocol -h
+    - ommanalyze -h
