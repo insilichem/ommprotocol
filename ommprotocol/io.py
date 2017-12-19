@@ -33,6 +33,7 @@ try:
     import ruamel_yaml as yaml
 except ImportError:
     from ruamel import yaml
+import jinja2
 from simtk import unit as u
 from simtk.openmm.app import (PDBFile, PDBxFile, ForceField,
                               PDBReporter, PDBxReporter,
@@ -880,9 +881,11 @@ def prepare_input(argv=None):
                    help='Validate input file only')
     args = p.parse_args(argv if argv else sys.argv[1:])
 
+    jinja_env = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
     # Load config file
     with open(args.input) as f:
-        cfg = yaml.load(f, Loader=YamlLoader)
+        rendered = jinja_env.from_string(f.read()).render()
+        cfg = yaml.load(rendered, Loader=YamlLoader)
     # Paths and dirs
     cfg['_path'] = os.path.abspath(args.input)
     cfg['system_options'] = prepare_system_options(cfg)

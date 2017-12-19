@@ -6,7 +6,9 @@ dependencies:
 - python
 - openmm
 - ruamel_yaml
+- jinja2
 - parmed
 - openmoltools
 - mdtraj
 - gromacs
+- netcdf4
