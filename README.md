@@ -47,13 +47,14 @@ Installation
 
     Or, if there's no package for your platform, install the conda packages separately and then install `ommprotocol` from pip or source.
 
-        conda create -n openmm -c omnia openmm ruamel_yaml parmed openmoltools mdtraj
+        conda create -n openmm -c omnia openmm ruamel_yaml parmed openmoltools mdtraj netcdf4 jinja2
         pip install ommprotocol
         # dev version: pip install https://github.com/insilichem/ommprotocol/archive/master.zip
 
-4. If everything is OK, this sould run correctly.
+4. If everything is OK, these sould run correctly.
 
         ommprotocol -h
+        ommanalyze -h
 
 Usage
 -----
@@ -146,7 +147,6 @@ Ommprotocol is scientific software, funded by public research grants (Spanish MI
 ```
 @misc{ommprotocol2017,
   author       = {Jaime Rodríguez-Guerra Pedregal and
-                  Daniel Soler and
                   Lur Alonso-Cotchico and
                   Lorea Velasco and
                   Jean-Didier Maréchal},
