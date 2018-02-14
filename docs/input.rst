@@ -4,7 +4,7 @@ OMMProtocol input files
 
 OMMProtocol is designed with a strong focus on reproducibility. As a result, the input file contains all the necessary details to run a whole simulation. OMMProtocol input files are written with Jinja-enhanced YAML files and look like this:
 
-:: yaml
+::
 
     # Protocol for implicit solvent (implicit.yaml)
 
@@ -58,7 +58,7 @@ OMMProtocol is designed with a strong focus on reproducibility. As a result, the
 There's two main parts in these files:
 
 * Top-level parameters: listed in next section, they are common for all stages
-* `stages`: Contains a list with all the stages to be simulated in the requested order. Each stage can override one or more global parameter(s), if needed.
+* ``stages``: Contains a list with all the stages to be simulated in the requested order. Each stage can override one or more global parameter(s), if needed.
 
 Provided examples
 -----------------
@@ -126,7 +126,7 @@ General conditions of simulation
 - ``barostat``: *True* for NPT, *False* for NVT. Defaults to False.
 - ``pressure``: In bar. Only used if barostat is *True*. Defaults to 1.01325.
 - ``barostat_interval``: Update interval of barostat, in steps. Defaults to 25.
-- ``restrained_atoms``, `constrained_atoms`: Parts of the system that should remain restrained (a ``k*((x-x0)^2+(y-y0)^2+(z-z0)^2)`` force is applied to minimize movement) or constrained (no movement at all) during the simulation. Supports `mdtraj`'s [DSL queries](http://mdtraj.org/latest/atom_selection.html) or a list of 0-based atom indices. Default to None (no freezing).
+- ``restrained_atoms``, `constrained_atoms`: Parts of the system that should remain restrained (a ``k*((x-x0)^2+(y-y0)^2+(z-z0)^2)`` force is applied to minimize movement) or constrained (no movement at all) during the simulation. Supports ``mdtraj``'s `DSL queries <http://mdtraj.org/latest/atom_selection.html>`_ or a list of 0-based atom indices. Default to None (no freezing).
 - ``restraint_strength``: If restraints are in use, the strength of the applied force in kJ/mol. Defaults to 5.0.
 - ``integrator``: Which integrator should be used. Langevin by default.
 - ``friction``: Friction coefficient for integrator, if needed. In 1/ps. Defaults to 1.0.
@@ -151,4 +151,4 @@ Hardware options
 ................
 
 - ``platform``: Which platform to use: *CPU*, *CUDA*, *OpenCL*. If not set, OpenMM will choose the fastest available.
-- ``platform_properties``: A sub-dict of keyworkds to configure the chosen platform. Check the [OpenMM docs](http://docs.openmm.org/7.1.0/api-python/generated/simtk.openmm.openmm.Platform.html#simtk.openmm.openmm.Platform) to know the supported values. Please notice all values must be strings, even booleans and ints; as a result, you should quote the values like this `'true'`.
+- ``platform_properties``: A sub-dict of keyworkds to configure the chosen platform. Check the `OpenMM docs <http://docs.openmm.org/7.1.0/api-python/generated/simtk.openmm.openmm.Platform.html#simtk.openmm.openmm.Platform>`_ to know the supported values. Please notice all values must be strings, even booleans and ints; as a result, you should quote the values like this ``'true'``.

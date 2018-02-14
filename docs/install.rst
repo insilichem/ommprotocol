@@ -19,14 +19,15 @@ OMMProtocol is also distributed as a separate ``conda`` package. If you already 
 
 1. Download and install `Miniconda <http://conda.pydata.org/miniconda.html>`_, a tiny Python distribution with a cool package manager and installer. Check `its webpage <http://conda.pydata.org/docs/>`_ for more info.
 
-For Linux:
-
 ::
+
+    For Linux:
 
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     bash Miniconda3*.sh
 
-For Windows, download the `EXE installer <https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe>`_ and follow the wizard.
+    For Windows, download the EXE installer:
+    https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe
 
 
 2. Install it in the default environment...
@@ -36,7 +37,7 @@ For Windows, download the `EXE installer <https://repo.continuum.io/miniconda/Mi
     conda install -c omnia -c insilichem ommprotocol
 
 
-3. .. or use a new, separate environment (optional):
+3. ... or use a new, separate environment (optional):
 
 ::
 
@@ -55,6 +56,8 @@ Third method: from source
 -------------------------
 
 If there's no package for your platform, install the dependencies with ``conda`` and then install ``ommprotocol`` from pip or source.
+
+::
 
     conda create -n ommprotocol -c omnia openmm ruamel_yaml parmed openmoltools mdtraj netcdf4 jinja2 pdbfixer
     conda activate ommprotocol
