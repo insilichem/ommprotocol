@@ -125,6 +125,8 @@ def timed_input(prompt, timeout=300.0):
 
 
 def warned_getattr(name, attr, default):
+    if attr is None:
+        return default
     try:
         return getattr(name, attr)
     except AttributeError:

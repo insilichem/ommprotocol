@@ -28,7 +28,8 @@ from simtk.openmm import app
 from mdtraj import Topology as MDTrajTopology
 # Own
 from .io import REPORTERS, ProgressBarReporter, SerializedReporter, prepare_system_options
-from .utils import random_string, assert_not_exists, timed_input, available_platforms, warned_getattr
+from .utils import (random_string, assert_not_exists, timed_input,
+                    available_platforms, warned_getattr)
 
 logger = logging.getLogger(__name__)
 
@@ -42,21 +43,16 @@ SELECTORS = {
     'protein_no_H': 'protein and element != H',
     'calpha': 'name == CA'
 }
-NONBONDEDMETHODS = {
-    None: app.NoCutoff, 'None': app.NoCutoff, '': app.NoCutoff
-}
-INTEGRATORS = {
-    None: mm.LangevinIntegrator, 'None': mm.LangevinIntegrator, '': mm.LangevinIntegrator,
-}
 PRECISION = {
     'CPU': None,
     'CUDA': 'CudaPrecision',
     'OpenCL': 'OpenCLPrecision'
 }
 SYSTEM_OPTIONS = {
-}  # OpenMM ones
+    'nonbondedMethod': app.NoCutoff,
+}
 DEFAULT_OPTIONS = {
-    'system_options': SYSTEM_OPTIONS
+    'system_options': SYSTEM_OPTIONS,
 }
 
 
@@ -81,7 +77,7 @@ def protocol(handler, cfg):
     for stage_options in stages:
         options = DEFAULT_OPTIONS.copy()
         options.update(cfg)
-        stage_system_options = prepare_system_options(stage_options, fill_not_found=False)
+        stage_system_options = prepare_system_options(stage_options)
         options.update(stage_options)
         options['system_options'].update(stage_system_options)
         stage = Stage(handler, positions=pos, velocities=vel, box=box,
@@ -184,7 +180,7 @@ class Stage(object):
     _stage_number = [0]
 
     def __init__(self, handler, positions=None, velocities=None, box=None,
-                 steps=0, minimization=True, barostat=True, temperature=300,
+                 steps=0, minimization=False, barostat=False, temperature=300,
                  timestep=1.0, pressure=1.01325, integrator='LangevinIntegrator',
                  barostat_interval=25, system_options=None, platform=None,
                  platform_properties=None, trajectory=None, trajectory_every=2000,
@@ -407,11 +403,9 @@ class Stage(object):
         if self._integrator is None:
             try:
                 i = getattr(mm, self._integrator_name)
-            except AttributeError:
-                try:
-                    i = INTEGRATORS[self._integrator_name]
-                except KeyError:
-                    raise NotImplementedError('Integrator {} not found'.format(self._integrator))
+            except (TypeError, AttributeError):
+                raise NotImplementedError('Integrator {} not found'
+                                          .format(self._integrator_name))
             self._integrator = i(self.temperature * u.kelvin,
                                  self.friction / u.picoseconds,
                                  self.timestep * u.femtoseconds)
@@ -639,9 +633,10 @@ class Stage(object):
         path = self.new_filename(suffix='_emergency.state')
         self.simulation.saveState(path)
         uses_pbc = self.system.usesPeriodicBoundaryConditions()
-        state = self.simulation.context.getState(getPositions=True, getVelocities=True,
-                                                 getForces=True, enforcePeriodicBox=uses_pbc,
-                                                 getParameters=True, getEnergy=True)
+        state_kw = dict(getPositions=True, getVelocities=True,
+                        getForces=True, enforcePeriodicBox=uses_pbc,
+                        getParameters=True, getEnergy=True)
+        state = self.simulation.context.getState(**state_kw)
         for reporter in self.simulation.reporters:
             if not isinstance(reporter, app.StateDataReporter):
                 reporter.report(self.simulation, state)
