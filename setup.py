@@ -21,7 +21,7 @@ setup(
     author="Jaime Rodríguez-Guerra",
     author_email='jaime.rogue@gmail.com',
     description='Easy to deploy MD protocols for OpenMM',
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     packages=['ommprotocol'],
     package_data={'': ['../examples/*.yaml']},
     platforms='any',

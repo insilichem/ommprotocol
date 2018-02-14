@@ -12,25 +12,15 @@ Some cool features
 ------------------
 
 + No coding required - just a YAML input file!
-
 + Smart support for different input file formats:
-
   + **Topology**: PDB/PDBx, Mol2, Amber's PRMTOP, Charmm's PSF, Gromacs' TOP, Desmond's DMS
-
   + **Positions**: PDB, COOR, INPCRD, CRD, GRO
-
   + **Velocities**: PDB, VEL
-
   + **Box vectors**: PDB, XSC, CSV, INPCRD, GRO
-
   + A fallback method is implemented and will attempt to load verything else that might be supported by `ParmEd <http://parmed.github.io/ParmEd/html/index.html>`_.
-
-+ Choose your preferred **trajectory** format (PDB, PDBx, DCD, HDF5, NETCDF, MDCRD) and **checkpoints** (Amber restart, OpenMM XML states, restart).
-
++ Choose your preferred **trajectory** format (PDB, PDBx, DCD, HDF5, NETCDF, MDCRD) and **checkpoints** (Amber's, CHARMM's, OpenMM XML states).
 + Live report of simulation progress, with estimated ETA and speed.
-
 + Checkpoint every *n* steps. Also, emergency rescue files are created if an error occurs.
-
 + Autochunk the trajectories for easy handling.
 
 
