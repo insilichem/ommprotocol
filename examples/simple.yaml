@@ -1,0 +1,6 @@
+# Simplest protocol
+
+topology: output.pdb
+stages:
+- minimization: True
+  steps: 100000
