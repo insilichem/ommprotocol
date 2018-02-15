@@ -25,6 +25,7 @@ requirements:
     - mdtraj
     - netcdf4
     - jinja2
+    - pdbfixer
 
 test:
   requires:
