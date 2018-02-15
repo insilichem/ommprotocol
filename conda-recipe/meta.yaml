@@ -26,6 +26,7 @@ requirements:
     - netcdf4
     - jinja2
     - pdbfixer
+    - matplotlib
 
 test:
   requires:
@@ -35,6 +36,10 @@ test:
   imports:
     - ommprotocol
 
+  source_files:
+    - tests
+
   commands:
     - ommprotocol -h
     - ommanalyze -h
+    - pytest tests
