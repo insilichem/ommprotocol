@@ -1,3 +1,3 @@
-include MANIFEST.in README.md LICENSE examples/*.yaml
+include MANIFEST.in README.rst LICENSE examples/*.yaml
 include versioneer.py
 include ommprotocol/_version.py
