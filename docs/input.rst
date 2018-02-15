@@ -67,11 +67,11 @@ Provided examples
 
 OMMProtocol ships with some `ready-to-use example protocols <https://github.com/insilichem/ommprotocol/tree/master/examples>`_, which can be used as a template to create a custom one. Most of the time you will only need to change the ``topology`` and ``positions`` keys, detailed in the next section. Available examples:
 
-- *`standard.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/standard.yaml>`_*: The protocol used in most of our solvated protein simulations, such as in [Lur]. It includes a progressive solvent relaxation step, followed by a simulated annealing from 100 to 300K, ending with a long production stage.
-- *`standard_jinja.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/standard_jinja.yaml>`_*: Same as previous one, but the simulated annealing stages are described with a Jinja loop for a cleaner result.
-- *`implicit.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/implicit.yaml>`_*: Same parameters as ``standard.yaml``, but optimized for implicit solvent conditions in a single stage (no need for solvent relaxation).
-- *`test.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/test.yaml>`_*: Protocol meant to debug a problematic simulation (those that end in ``Particle position is NaN``, for example) by dumping states and trajectories every 10 steps. It runs very slow and consumes lots of disk space!
-- *`simple.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/simple.yaml>`_*: Toy example to show the simplest protocol implementable in OMMProtocol.
+- `standard.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/standard.yaml>`_: The protocol used in most of our solvated protein simulations, such as in [Lur]. It includes a progressive solvent relaxation step, followed by a simulated annealing from 100 to 300K, ending with a long production stage.
+- `standard_jinja.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/standard_jinja.yaml>`_: Same as previous one, but the simulated annealing stages are described with a Jinja loop for a cleaner result.
+- `implicit.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/implicit.yaml>`_: Same parameters as ``standard.yaml``, but optimized for implicit solvent conditions in a single stage (no need for solvent relaxation).
+- `test.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/test.yaml>`_: Protocol meant to debug a problematic simulation (those that end in ``Particle position is NaN``, for example) by dumping states and trajectories every 10 steps. It runs very slow and consumes lots of disk space!
+- `simple.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/simple.yaml>`_: Toy example to show the simplest protocol implementable in OMMProtocol.
 
 
 Top-level parameters
