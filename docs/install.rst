@@ -9,7 +9,7 @@ First method: Standalone installer
 
 If you haven't used Anaconda or Miniconda before (a Python distribution with a cool package manager), your best bet is to simply download the installer for the latest release, which includes everything you need.
 
-1. Go to the OMMProtocol releases page and download the latest stable version.
+1. Go to the `OMMProtocol releases page <https://github.com/insilichem/ommprotocol/releases>`_ and download the latest stable version.
 2. Run the installer and follow the instructions!
     a. In Linux and Mac OS X, open the terminal and run ``bash ~/Downloads/ommprotocol*.sh`` or whatever path the file got saved.
     b. In Windows, double click on the downloaded ``ommprotocol*.exe``.
@@ -17,7 +17,8 @@ If you haven't used Anaconda or Miniconda before (a Python distribution with a c
 
 Second method: Conda package
 ----------------------------
-OMMProtocol is also distributed as a separate ``conda`` package. If you already have Anaconda/Miniconda installed, you won't probably want to download a separate Python distribution, and can skip to step 2.
+
+OMMProtocol is also distributed as a separate ``conda`` package. If you already have Anaconda/Miniconda installed, you won't probably want to download a separate Python distribution. In that case, skip to step 2.
 
 1. Download and install `Miniconda <http://conda.pydata.org/miniconda.html>`_, a tiny Python distribution with a cool package manager and installer. Check `its webpage <http://conda.pydata.org/docs/>`_ for more info.
 
@@ -54,7 +55,7 @@ OMMProtocol is also distributed as a separate ``conda`` package. If you already 
         ommprotocol -h
         ommanalyze -h
 
-Third method: from source
+Third method: From source
 -------------------------
 
 If there's no package for your platform, install the dependencies with ``conda`` and then install ``ommprotocol`` from pip or source.
@@ -67,3 +68,25 @@ If there's no package for your platform, install the dependencies with ``conda``
     pip install ommprotocol
     # dev version
     pip install https://github.com/insilichem/ommprotocol/archive/master.zip
+
+
+==================
+Update OMMProtocol
+==================
+
+Depending on the installation method, updating OMMProtocol involves different steps.
+
+First method: Standalone installer
+----------------------------------
+
+Just `download the installer for the new version <https://github.com/insilichem/ommprotocol/releases>`_ and run it. In Linux/MacOS you will need to append the ``-U`` flag to the installer. In Windows, just follow the wizard.
+
+Second method: Conda package
+----------------------------
+
+Within the activated environment, run ``conda update ommprotocol``. That's it.
+
+Third method: From source
+-------------------------
+
+Simply pass the ``-U`` flag to pip: ``pip install -U ommprotocol`` or, for development version, ``pip install -U https://github.com/insilichem/ommprotocol/archive/master.zip``.
