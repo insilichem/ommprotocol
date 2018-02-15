@@ -5,6 +5,10 @@ OMMProtocol
 .. image:: https://travis-ci.org/insilichem/ommprotocol.svg?branch=master
     :target: https://travis-ci.org/insilichem/ommprotocol
 
+.. image:: https://readthedocs.org/projects/ommprotocol/badge/?version=latest
+    :target: http://ommprotocol.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 A command line application to launch molecular dynamics simulations with OpenMM
 
 
@@ -13,11 +17,11 @@ Some cool features
 
 + No coding required - just a YAML input file!
 + Smart support for different input file formats:
-  + **Topology**: PDB/PDBx, Mol2, Amber's PRMTOP, Charmm's PSF, Gromacs' TOP, Desmond's DMS
-  + **Positions**: PDB, COOR, INPCRD, CRD, GRO
-  + **Velocities**: PDB, VEL
-  + **Box vectors**: PDB, XSC, CSV, INPCRD, GRO
-  + A fallback method is implemented and will attempt to load verything else that might be supported by `ParmEd <http://parmed.github.io/ParmEd/html/index.html>`_.
+    + **Topology**: PDB/PDBx, Mol2, Amber's PRMTOP, Charmm's PSF, Gromacs' TOP, Desmond's DMS
+    + **Positions**: PDB, COOR, INPCRD, CRD, GRO
+    + **Velocities**: PDB, VEL
+    + **Box vectors**: PDB, XSC, CSV, INPCRD, GRO
+    + A fallback method is implemented and will attempt to load verything else that might be supported by `ParmEd <http://parmed.github.io/ParmEd/html/index.html>`_.
 + Choose your preferred **trajectory** format (PDB, PDBx, DCD, HDF5, NETCDF, MDCRD) and **checkpoints** (Amber's, CHARMM's, OpenMM XML states).
 + Live report of simulation progress, with estimated ETA and speed.
 + Checkpoint every *n* steps. Also, emergency rescue files are created if an error occurs.
@@ -26,7 +30,7 @@ Some cool features
 
 Installation & usage
 --------------------
-Download the latest installer or use ``conda install -c omnia -c insilichem ommprotocol`` if you already have Anaconda/Miniconda installed. Further details `here <docs/install.rst>`_.
+Download the latest installer or use ``conda install -c omnia -c insilichem ommprotocol`` if you already have Anaconda/Miniconda installed. Further details `here <http://ommprotocol.readthedocs.io/en/latest/install.html>`_.
 
 When installed, you should be able to run:
 
@@ -34,13 +38,17 @@ When installed, you should be able to run:
 
     ommprotocol <inputfile.yaml>
 
-Click `here <docs/input.rst>`_ to read more on how to create input files for OMMProtocol.
+Check the `documentation <http://ommprotocol.readthedocs.io/en/latest/input.html>`_ to read more on how to create input files for OMMProtocol.
 
 
 Get help
 --------
 
-If you have problems running ``ommprotocol``, feel free to `create an issue <https://github.com/insilichem/ommprotocol/issues>`_! Also, make sure to visit our main webpage at `insilichem.com <http://www.insilichem.com>`_.
+.. image:: https://readthedocs.org/projects/ommprotocol/badge/?version=latest
+    :target: http://ommprotocol.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+Documentation is always available at `ReadTheDocs <http://ommprotocol.readthedocs.io>`_. If you have problems running ``ommprotocol``, feel free to `create an issue <https://github.com/insilichem/ommprotocol/issues>`_! Also, make sure to visit our main webpage at `insilichem.com <http://www.insilichem.com>`_.
 
 
 Citation
