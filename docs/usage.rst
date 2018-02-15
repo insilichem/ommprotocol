@@ -1,8 +1,10 @@
-======================
-How to use OMMProtocol
-======================
+.. _usage:
 
-Once `installed <install.rst>`_, first thing to do is `creating the input file <input.rst>`_ for your simulation. This task usually involve two different steps:
+===========
+Quick usage
+===========
+
+Once installed (:ref:`install`), first thing to do is creating the input file (:ref:`input`) for your simulation. This task usually involve two different steps:
 
 1. Getting the structural data (topology, coordinates)
 2. Specifying the simulation details:

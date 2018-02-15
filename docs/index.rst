@@ -1,6 +1,8 @@
-===========
-OMMProtocol
-===========
+.. _index:
+
+=======================
+Introducing OMMProtocol
+=======================
 
 .. image:: https://travis-ci.org/insilichem/ommprotocol.svg?branch=master
     :target: https://travis-ci.org/insilichem/ommprotocol
@@ -34,7 +36,7 @@ When installed, you should be able to run:
 
     ommprotocol <inputfile.yaml>
 
-Click `here <docs/input.rst>`_ to read more on how to create input files for OMMProtocol.
+Go to :ref:`input` to read more on how to create input files for OMMProtocol.
 
 
 Get help
@@ -58,3 +60,20 @@ Ommprotocol is scientific software, funded by public research grants (Spanish MI
     title        = {OMMProtocol: A command line application to launch molecular dynamics simulations with OpenMM},
     url          = {https://github.com/insilichem/ommprotocol}
     }
+
+Table of contents
+-----------------
+
+.. toctree::
+    :maxdepth: 1
+
+    install.rst
+    usage.rst
+    input.rst
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

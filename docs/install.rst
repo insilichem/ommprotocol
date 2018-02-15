@@ -1,6 +1,8 @@
-===================================
-How to install OMMProtocol & OpenMM
-===================================
+.. _install:
+
+============
+Installation
+============
 
 First method: Standalone installer
 ----------------------------------
