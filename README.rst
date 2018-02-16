@@ -9,7 +9,10 @@ OMMProtocol
     :target: http://ommprotocol.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+
 A command line application to launch molecular dynamics simulations with OpenMM
+
+.. image:: docs/img/ommprotocol.gif
 
 
 Some cool features
@@ -54,11 +57,11 @@ Documentation is always available at `ReadTheDocs <http://ommprotocol.readthedoc
 Citation
 --------
 
-Ommprotocol is scientific software, funded by public research grants (Spanish MINECO's project ``CTQ2014-54071-P``, Generalitat de Catalunya's project ``2014SGR989`` and research grant ``2015FI_B00768``, COST Action ``CM1306``). If you make use of Ommprotocol in scientific publications, please cite it. It will help measure the impact of our research and future funding! A manuscript is in progress. In the meantime, please cite this repository URL.
+OMMProtocol is scientific software, funded by public research grants (Spanish MINECO's project ``CTQ2014-54071-P``, Generalitat de Catalunya's project ``2014SGR989`` and research grant ``2015FI_B00768``, COST Action ``CM1306``). If you make use of Ommprotocol in scientific publications, please cite it. It will help measure the impact of our research and future funding! A manuscript is in progress. In the meantime, please cite this repository URL.
 
 .. code-block:: latex
 
-    @misc{ommprotocol2017,
+    @misc{ommprotocol,
     author       = {Jaime Rodríguez-Guerra Pedregal and
                     Lur Alonso-Cotchico and
                     Lorea Velasco and

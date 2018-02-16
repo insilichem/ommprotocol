@@ -27,7 +27,7 @@ With a correctly formed YAML input file named, for example, *simulation.yaml*, t
 
 If the structure is correctly formed and the forcefield parameters are well defined, the screen will now display a status like this:
 
-**GIF animation pending**
+.. image:: img/ommprotocol.gif
 
 
 The generated files will be written to the directory specified in the ``outputpath`` key (or, if omitted, to the same directory *simulation.yaml* is in), with the following name format: ``[globalname]_[stagename].[extension]``, where ``globalname`` is the value of the global ``name`` key in the input file, and ``stagename`` is the value of the ``stage`` key in each stage.
