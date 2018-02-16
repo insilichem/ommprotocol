@@ -12,3 +12,5 @@ dependencies:
 - mdtraj
 - gromacs
 - netcdf4
+- pdbfixer
+- matplotlib

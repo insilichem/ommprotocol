@@ -1,0 +1,40 @@
+environment:
+  APPVEYOR_SAVE_CACHE_ON_ERROR: "true"
+  BINSTAR_TOKEN:
+    secure: zW96v77uhbDdArc0805i/CDIvVpZvqCJyJ+WgSE1b65nPLO0nGUwmZ9qshUICIba
+  matrix:
+    - PYTHON: "C:\\Python27_64"
+      PYTHON_VERSION: "2.7"
+      PYTHON_ARCH: "64"
+      CONDA_PY: "27"
+
+    - PYTHON: "C:\\Python35_64"
+      PYTHON_VERSION: "3.5"
+      PYTHON_ARCH: "64"
+      CONDA_PY: "35"
+
+    - PYTHON: "C:\\Python36_64"
+      PYTHON_VERSION: "3.6"
+      PYTHON_ARCH: "64"
+      CONDA_PY: "36"
+
+matrix:
+  fast_finish: true
+
+cache:
+  - '%PYTHON%'
+
+install:
+  # this installs the appropriate Miniconda (Py2/Py3, 32/64 bit),
+  # as well as pip, conda-build
+  - ps: if (!(Test-Path $env:PYTHON\\Scripts\\conda.exe -PathType Leaf)){ .\\devtools\\ci\\install_miniconda.ps1 }
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - conda build purge
+  - rm -rf %PYTHON%/conda-bld/*
+  - conda build devtools/conda-recipe
+
+build: off
+
+deploy_script:
+  - ps: If ($env:APPVEYOR_REPO_TAG -eq "true" -And $env:APPVEYOR_REPO_BRANCH -eq "master") { $env:conda_upload = 'true' } Else { write-output "Not on a tag on master, won't deploy to anaconda" }
+  - cmd: IF "%conda_upload%"=="true" anaconda -t %BINSTAR_TOKEN% upload %PYTHON%/conda-bld/win-*/ommprotocol-*.tar.bz2 -u insilichem --no-progress --force
