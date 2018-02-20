@@ -1,0 +1,18 @@
+{
+    "menu_name": "OMMProtocol",
+    "menu_items":
+        [
+            {
+                "script": "cmd.exe",
+                "scriptarguments": ["/K", "echo", "Run ommprotocol --help for quick usage"],
+                "name": "OMMProtocol",
+                "workdir": "${PYTHON_SCRIPTS}",
+                "icon": "${MENU_DIR}/app.ico",
+                "desktop": true,
+                "quicklaunch": true
+            },
+            {
+                "webbrowser": "http://ommprotocol.readthedocs.io"
+            }
+        ]
+}

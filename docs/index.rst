@@ -70,6 +70,7 @@ Table of contents
     install.rst
     usage.rst
     input.rst
+    forcefields.rst
 
 Indices and tables
 ------------------

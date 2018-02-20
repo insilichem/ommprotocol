@@ -41,15 +41,14 @@ cache:
   - $HOME/download
   - $HOME/miniconda
 
-before_cache:
-- if ! [[ $TRAVIS_TAG ]]; then rm -rf $HOME/miniconda/conda-bld; fi
-- rm -rf $HOME/miniconda/locks $HOME/miniconda/pkgs $HOME/miniconda/var $HOME/miniconda/conda-meta/history
-- pip uninstall -y ommprotocol
+# before_cache:
+# - if [[ ! $TRAVIS_TAG ]]; then rm -rf $HOME/miniconda/conda-bld; fi
+# - rm -rf $HOME/miniconda/locks $HOME/miniconda/pkgs $HOME/miniconda/var $HOME/miniconda/conda-meta/history
 
 branches:
   only:
   - master
-  - /^[0-9]+\.[0-9]+(\.[0-9]+)?([ab][0-9]+)?$/  # release branches
+  - /^v[0-9]+\.[0-9]+(\.[0-9]+)?([abc][0-9]+)?$/  # release branches
 
 before_install:
 # Get miniconda. Take the right version, so re-installing python is hopefully not needed.
@@ -84,17 +83,48 @@ install:
 # Configure conda and get a few essentials
 - conda config --set always_yes yes
 # Show conda info for debugging
-- conda install -q conda
+- conda install -q conda conda-build
+- conda config --add channels bioconda
+- conda config --add channels omnia
+- conda config --add channels insilichem
 - conda info -a
-
-# Dependencies
-- conda env create -f environment.yml || conda env update -n ommprotocol -f environment.yml
-- source activate ommprotocol
-- conda install -q pytest
-- python setup.py install
-# Show currently installed packages
 - conda list
+# Dependencies
+- travis_wait conda build --python=${MYCONDAPY} devtools/conda-recipe
+- if [[ $TRAVIS_TAG ]]; then
+    conda install -q anaconda-client;
+    anaconda -t $ANACONDA_TOKEN upload -u insilichem $HOME/miniconda/conda-bld/**/ommprotocol-*.tar.bz2;
+  fi;
 
-script:
-- cd tests
-- pytest
+# before_deploy:
+# - conda install constructor;
+# - conda remove --force constructor;
+# - pip install -U --no-deps https://github.com/jaimergp/constructor/archive/jinja-env.zip;
+# - ls -alh ${CONDA_PREFIX}/conda-bld/*;
+# - constructor . ;
+
+deploy:
+# Deploy to PyPI
+- provider: pypi
+  username: jaimergp
+  skip_cleanup: true
+  password:
+    secure: al4NX0/MIP0IDu7IcMKlKi6ySWTSNNxiM2DcOJROnqcyAOtC5+r+j+VmB03YZxLXw8+czUxDWorORRXmOsHTw29+BRWLBKJAjLUQw2QYMlf/0tCkrvpKvMG+OY9w1dxOVBOb3atme9IjQn6QDlMdu30sw8vaHudNEOMD6uspCRFngW4mjFAgTwgm2Bxs9Kmyeo83oVArdPDXU7ww1T7Jc6mKxX2e2YGjCGoVLrgsIZIJZOyxFRynwvZsYmjyLxKsQ82WbAaKptNdes4K0ihfQAwTDECGnFDzjU8TxonwaXpKW/2rkJPxkb62MdpDnWD5NtatrJ1oqx0tUILBLriUpQaRA2qR9pApBmsehQesC/z4jaNPmQqs8/he6SCPuEMneiICsCouwJOEcRD2MCdhRdFyfzVWdmcZI9Lf8jyMq/cHWwfKWGuIM/PVClMwupDrvJxcGkoXN/T+mWTaXPRNTPBcldq7GDBhKxm6vWUHPJOyS/w4/9lQs91sENVd6CBPzM8EcX4nV0JkjYKoGxuO2tEwa3LUihbgnpr2QdckYjxRUp8VLUW825886vrZSfRRTjfJp6d9EBLa4FC6YOezwxeotaquVmkMLjDPnboAEbQjbUicSSOaqKUDvjD+jxdnxc9KAKEDUEiXIIzx8wPO2JmoESeqg6hlYWntjqk2/tM=
+  on:
+    tags: true
+    condition: "$MYCONDAPY = 3.6"
+# Deploy to GitHub releases
+# - provider: releases
+#   api_key:
+#     secure: fJMzrHDGscgyCcr93zMBqFmf6jJEeDJjUTFg75PVPOI5YpEGMmJujXZpyocIW9PVOWeso+gG7H0SQWBDEv8ptSGu43GO8nipFvSrJxcR+tQOP5Vosl/xvDLq+B4fPPf3ZvjQC70+lppjHubOY2UaPjnuOyuZvtcmEGZ+NGh3Oq5B31im9bgekhpzmvzmOt0i9uc/hKCH9m7QlRTEdVDAfxuuzILjqadBU2k70MiIvLqLkGcQzOv8jF0bqQOBUD81p49vzLK1Pjuv6j5s+GDd+Kb4jlwZ7EF+lfPGVZXob91wk1m4bIAlaj8wAlIXS/tqgM8qrlYJHHVb8arOYmt/KWawuGoSmpes7wqkJOX/BypFGDatqyWll+LkAuKU4uy9LkNvPBPiVOgw7FIScEH5r8tMLABhHWVcwbW6iG2NM1qDOdLQvbu6lR07AgQApkBtIT7ZEcKg2dehiIilV/5FZX68NDsenND+D90Gyu8WZZFS48uKkxH/ETAbMdBQRbgtaIIHFX+P07wrWeS9yQMSp4CKq9yQfz8FiWeQs7q/XixyUf/YjuhdF70sXb0WHdMEiAjyvpuYOxnyrS8aW2VZ54EAYgzrt3tPMcquvm4/rRqfPycx5BIdHYAn/BBbU2d4MSmCWy4/SOyGc5slCdw2xazg2gqElDcIlmV5J3wx+D8=
+#   file_glob: true
+#   file: ommprotocol-**.sh
+#   name: ommprotocol-${TRAVIS_TAG}
+#   body: ${TRAVIS_COMMIT_MESSAGE}
+#   draft: true
+#   prerelease: true
+#   skip_cleanup: true
+#   on:
+#     tags: true
+#     repo: insilichem/ommprotocol
+#     condition: "$MYCONDAPY = 3.6"

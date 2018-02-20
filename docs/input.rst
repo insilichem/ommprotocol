@@ -87,7 +87,7 @@ Input options
 - ``velocities``: File containing the initial velocities of this stage. If not set, they will be set to the requested temperature.
 - ``box_vectors``: File with replacement periodic box vectors, instead of those in the topology or positions file. Supported file types: XSC.
 - ``checkpoint``: Restart simulation from this file. It can provide one or more of the options above.
-- ``forcefield``: Which forcefields should be used, if not provided in topology. Required for PDB topologies. OpenMM ships with `these forcefields <https://github.com/pandegroup/openmm/tree/master/wrappers/python/simtk/openmm/app/data>`_.
+- ``forcefield``: Which forcefields should be used, if not provided in topology. Required for PDB topologies. More details on :ref:`forcefields`.
 - ``charmm_parameters``: CHARMM forcefield. Required for PSF topologies.
 
 Since several types of files can provide the same type of data (positions, vectors...), there is an established order of precedence. ``topology < checkpoint < positions & velocities < box``. The only keys out of this chain are``forcefield`` and ``charmm_parameters``, which are only required for the specified types of topology.

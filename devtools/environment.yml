@@ -1,7 +1,7 @@
 name: ommprotocol
 channels:
 - omnia
-- bioconda
+- bioconda  # [unix]
 dependencies:
 - python
 - openmm
@@ -10,7 +10,7 @@ dependencies:
 - parmed
 - openmoltools
 - mdtraj
-- gromacs
+- gromacs # [unix]
 - netcdf4
 - pdbfixer
 - matplotlib
