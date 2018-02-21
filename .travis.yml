@@ -112,7 +112,7 @@ deploy:
     secure: al4NX0/MIP0IDu7IcMKlKi6ySWTSNNxiM2DcOJROnqcyAOtC5+r+j+VmB03YZxLXw8+czUxDWorORRXmOsHTw29+BRWLBKJAjLUQw2QYMlf/0tCkrvpKvMG+OY9w1dxOVBOb3atme9IjQn6QDlMdu30sw8vaHudNEOMD6uspCRFngW4mjFAgTwgm2Bxs9Kmyeo83oVArdPDXU7ww1T7Jc6mKxX2e2YGjCGoVLrgsIZIJZOyxFRynwvZsYmjyLxKsQ82WbAaKptNdes4K0ihfQAwTDECGnFDzjU8TxonwaXpKW/2rkJPxkb62MdpDnWD5NtatrJ1oqx0tUILBLriUpQaRA2qR9pApBmsehQesC/z4jaNPmQqs8/he6SCPuEMneiICsCouwJOEcRD2MCdhRdFyfzVWdmcZI9Lf8jyMq/cHWwfKWGuIM/PVClMwupDrvJxcGkoXN/T+mWTaXPRNTPBcldq7GDBhKxm6vWUHPJOyS/w4/9lQs91sENVd6CBPzM8EcX4nV0JkjYKoGxuO2tEwa3LUihbgnpr2QdckYjxRUp8VLUW825886vrZSfRRTjfJp6d9EBLa4FC6YOezwxeotaquVmkMLjDPnboAEbQjbUicSSOaqKUDvjD+jxdnxc9KAKEDUEiXIIzx8wPO2JmoESeqg6hlYWntjqk2/tM=
   on:
     tags: true
-    condition: "$MYCONDAPY = 3.6"
+    condition: "$MYCONDAPY = 3.6 && $TRAVIS_OS_NAME = linux"
 # Deploy to GitHub releases
 # - provider: releases
 #   api_key:

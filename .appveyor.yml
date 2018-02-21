@@ -21,6 +21,7 @@ install:
   - ps: If ($env:APPVEYOR_REPO_TAG -eq "true" -AND $env:APPVEYOR_REPO_TAG_NAME.StartsWith('v')) { $env:conda_upload = 'true' }
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda build purge
+  - conda clean -y --all
   - rm -rf %PYTHON%/conda-bld/*
   - conda build -c omnia -c bioconda devtools/conda-recipe
   - IF "%conda_upload%"=="true" anaconda -t %BINSTAR_TOKEN% upload %PYTHON%/conda-bld/win-*/ommprotocol-*.tar.bz2 -u insilichem --no-progress --force
