@@ -39,7 +39,7 @@ Some cool features
 
 Installation & usage
 --------------------
-Download the latest installer or use ``conda install -c omnia -c insilichem ommprotocol`` if you already have Anaconda/Miniconda installed. Further details `here <http://ommprotocol.readthedocs.io/en/latest/install.html>`_.
+Download the `latest installer <https://github.com/insilichem/ommprotocol/releases/latest>`_ or use ``conda install -c omnia -c insilichem ommprotocol`` if you already have Anaconda/Miniconda installed. Further details `here <http://ommprotocol.readthedocs.io/en/latest/install.html>`_.
 
 When installed, you should be able to run:
 

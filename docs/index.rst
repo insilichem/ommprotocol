@@ -13,8 +13,6 @@ Introducing OMMProtocol
 .. image:: https://anaconda.org/insilichem/ommprotocol/badges/downloads.svg
     :target: https://anaconda.org/InsiliChem/ommprotocol
 
-
-
 A command line application to launch molecular dynamics simulations with OpenMM
 
 
@@ -36,7 +34,7 @@ Some cool features
 
 Installation & usage
 --------------------
-Download the latest installer or use ``conda install -c omnia -c insilichem ommprotocol`` if you already have Anaconda/Miniconda installed. Further details in :ref:`install`.
+Download the `latest installer <https://github.com/insilichem/ommprotocol/releases/latest>`_ or use ``conda install -c omnia -c insilichem ommprotocol`` if you already have Anaconda/Miniconda installed. Further details in :ref:`install`.
 
 When installed, you should be able to run:
 

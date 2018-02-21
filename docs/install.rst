@@ -9,11 +9,11 @@ First method: Standalone installer
 
 If you haven't used Anaconda or Miniconda before (a Python distribution with a cool package manager), your best bet is to simply download the installer for the latest release, which includes everything you need.
 
-1. Go to the `OMMProtocol releases page <https://github.com/insilichem/ommprotocol/releases>`_ and download the latest stable version.
+1. Go to the `OMMProtocol releases page <https://github.com/insilichem/ommprotocol/releases/latest>`_ and download the latest installer for your platform.
 2. Run the installer and follow the instructions!
-    a. In Linux and Mac OS X, open the terminal and run ``bash ~/Downloads/ommprotocol*.sh`` or whatever path the file got saved.
+    a. In Linux, open the terminal and run ``bash ~/Downloads/ommprotocol*.sh`` or whatever path the file got saved.
     b. In Windows, double click on the downloaded ``ommprotocol*.exe``.
-
+3. The installer will create, by default, a new directory called ``ommprotocol`` in your ``$HOME``. Under ``ommprotocol/bin``(Linux) or ``ommprotocol/Scripts`` (Windows) you will find the ``ommprotocol`` executable.
 
 Second method: Conda package
 ----------------------------
@@ -70,9 +70,8 @@ If there's no package for your platform, install the dependencies with ``conda``
     pip install https://github.com/insilichem/ommprotocol/archive/master.zip
 
 
-==================
-Update OMMProtocol
-==================
+Updating OMMProtocol
+--------------------
 
 Depending on the installation method, updating OMMProtocol involves different steps.
 
@@ -84,7 +83,7 @@ Just `download the installer for the new version <https://github.com/insilichem/
 Second method: Conda package
 ----------------------------
 
-Within the activated environment, run ``conda update ommprotocol``. That's it.
+Within the activated environment, run ``conda update -c insilichem -c omnia ommprotocol``. That's it.
 
 Third method: From source
 -------------------------

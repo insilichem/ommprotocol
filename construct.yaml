@@ -6,7 +6,7 @@ license_file: LICENSE
 welcome_image: docs/img/logo.png                  [win]
 
 channels:
-#  - file://{{ environ['CONDA_PREFIX'] }}/conda-bld
+  - file://{{ environ['CONDA_PREFIX'] }}/conda-bld
   - https://conda.anaconda.org/insilichem
   - https://conda.anaconda.org/omnia
   - https://repo.continuum.io/pkgs/main/
@@ -21,5 +21,6 @@ ignore_duplicate_files: True
 
 specs:
   - python 3.6*
+  - nomkl
   - ommprotocol
   - conda
