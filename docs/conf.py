@@ -57,8 +57,7 @@ author = 'Jaime RGP, InsiliChem'
 # built documents.
 #
 # The short X.Y version.
-from ommprotocol._version import get_versions
-version = get_versions()['version']
+version = '0.1.7'
 # The full version, including alpha/beta/rc tags.
 release = version
 
