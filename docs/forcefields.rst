@@ -91,5 +91,5 @@ Custom forcefields
 While the best option to generate custom parameters is to use something like AmberTools to create a PRMTOP topology and use that, there are options to develop custom parameters with OpenMM. Check these links for further information:
 
 - `Creating and Customizing Force Fields in OpenMM <https://www.youtube.com/watch?v=xap418xVjNI>`_ (YouTube video).
-- ``openmm-forcefields`` also features Python converters for Amber & CHARMM forcefields. As a result, automated tooling for those forcefields can be used and then converted to OpenMM, like ``antechamber`` or `cgenff``.
+- ``openmm-forcefields`` also features Python converters for Amber & CHARMM forcefields. As a result, automated tooling for those forcefields can be used and then converted to OpenMM, like ``antechamber`` or ``cgenff``.
 - `openmoltools <https://github.com/choderalab/openmoltools>`_ (included with OMMProtocol) provides some functions to process and convert forcefields. Specifically, ``openmoltools.amber.run_antechamber`` for parameterizing small molecules through AmberTools' ``antechamber``, and ``openmoltools.utils.create:_ffxml_file`` to convert the result to OpenMM XML forcefield format.
