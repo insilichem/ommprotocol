@@ -33,8 +33,6 @@ matrix:
   #    https://github.com/travis-ci/travis-ci/issues/2778
   #    ...
   fast_finish: true
-  allow_failures:
-  - os: osx
 
 cache:
   directories:
@@ -96,12 +94,11 @@ install:
     anaconda -t $ANACONDA_TOKEN upload -u insilichem $HOME/miniconda/conda-bld/**/ommprotocol-*.tar.bz2;
   fi;
 
-# before_deploy:
-# - conda install constructor;
-# - conda remove --force constructor;
-# - pip install -U --no-deps https://github.com/jaimergp/constructor/archive/jinja-env.zip;
-# - ls -alh ${CONDA_PREFIX}/conda-bld/*;
-# - constructor . ;
+before_deploy:
+- conda install constructor;
+- conda remove --force constructor;
+- pip install -U --no-deps https://github.com/jaimergp/constructor/archive/jinja-env.zip;
+- constructor . ;
 
 deploy:
 # Deploy to PyPI
@@ -113,18 +110,18 @@ deploy:
   on:
     tags: true
     condition: "$MYCONDAPY = 3.6 && $TRAVIS_OS_NAME = linux"
-# Deploy to GitHub releases
-# - provider: releases
-#   api_key:
-#     secure: fJMzrHDGscgyCcr93zMBqFmf6jJEeDJjUTFg75PVPOI5YpEGMmJujXZpyocIW9PVOWeso+gG7H0SQWBDEv8ptSGu43GO8nipFvSrJxcR+tQOP5Vosl/xvDLq+B4fPPf3ZvjQC70+lppjHubOY2UaPjnuOyuZvtcmEGZ+NGh3Oq5B31im9bgekhpzmvzmOt0i9uc/hKCH9m7QlRTEdVDAfxuuzILjqadBU2k70MiIvLqLkGcQzOv8jF0bqQOBUD81p49vzLK1Pjuv6j5s+GDd+Kb4jlwZ7EF+lfPGVZXob91wk1m4bIAlaj8wAlIXS/tqgM8qrlYJHHVb8arOYmt/KWawuGoSmpes7wqkJOX/BypFGDatqyWll+LkAuKU4uy9LkNvPBPiVOgw7FIScEH5r8tMLABhHWVcwbW6iG2NM1qDOdLQvbu6lR07AgQApkBtIT7ZEcKg2dehiIilV/5FZX68NDsenND+D90Gyu8WZZFS48uKkxH/ETAbMdBQRbgtaIIHFX+P07wrWeS9yQMSp4CKq9yQfz8FiWeQs7q/XixyUf/YjuhdF70sXb0WHdMEiAjyvpuYOxnyrS8aW2VZ54EAYgzrt3tPMcquvm4/rRqfPycx5BIdHYAn/BBbU2d4MSmCWy4/SOyGc5slCdw2xazg2gqElDcIlmV5J3wx+D8=
-#   file_glob: true
-#   file: ommprotocol-**.sh
-#   name: ommprotocol-${TRAVIS_TAG}
-#   body: ${TRAVIS_COMMIT_MESSAGE}
-#   draft: true
-#   prerelease: true
-#   skip_cleanup: true
-#   on:
-#     tags: true
-#     repo: insilichem/ommprotocol
-#     condition: "$MYCONDAPY = 3.6"
+#Deploy to GitHub releases
+- provider: releases
+  api_key:
+    secure: fJMzrHDGscgyCcr93zMBqFmf6jJEeDJjUTFg75PVPOI5YpEGMmJujXZpyocIW9PVOWeso+gG7H0SQWBDEv8ptSGu43GO8nipFvSrJxcR+tQOP5Vosl/xvDLq+B4fPPf3ZvjQC70+lppjHubOY2UaPjnuOyuZvtcmEGZ+NGh3Oq5B31im9bgekhpzmvzmOt0i9uc/hKCH9m7QlRTEdVDAfxuuzILjqadBU2k70MiIvLqLkGcQzOv8jF0bqQOBUD81p49vzLK1Pjuv6j5s+GDd+Kb4jlwZ7EF+lfPGVZXob91wk1m4bIAlaj8wAlIXS/tqgM8qrlYJHHVb8arOYmt/KWawuGoSmpes7wqkJOX/BypFGDatqyWll+LkAuKU4uy9LkNvPBPiVOgw7FIScEH5r8tMLABhHWVcwbW6iG2NM1qDOdLQvbu6lR07AgQApkBtIT7ZEcKg2dehiIilV/5FZX68NDsenND+D90Gyu8WZZFS48uKkxH/ETAbMdBQRbgtaIIHFX+P07wrWeS9yQMSp4CKq9yQfz8FiWeQs7q/XixyUf/YjuhdF70sXb0WHdMEiAjyvpuYOxnyrS8aW2VZ54EAYgzrt3tPMcquvm4/rRqfPycx5BIdHYAn/BBbU2d4MSmCWy4/SOyGc5slCdw2xazg2gqElDcIlmV5J3wx+D8=
+  file_glob: true
+  file: ommprotocol-**.sh
+  name: OMMProtocol-${TRAVIS_TAG}
+  body: ${TRAVIS_COMMIT_MESSAGE}
+  draft: true
+  prerelease: true
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: insilichem/ommprotocol
+    condition: "$MYCONDAPY = 3.6"

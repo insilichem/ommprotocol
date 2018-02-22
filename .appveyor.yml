@@ -25,25 +25,25 @@ install:
   - rm -rf %PYTHON%/conda-bld/*
   - conda build -c omnia -c bioconda devtools/conda-recipe
   - IF "%conda_upload%"=="true" anaconda -t %BINSTAR_TOKEN% upload %PYTHON%/conda-bld/win-*/ommprotocol-*.tar.bz2 -u insilichem --no-progress --force
-  # - IF "%conda_upload%"=="true" conda install -y  constructor
-  # - IF "%conda_upload%"=="true" conda remove -y --force constructor
-  # - IF "%conda_upload%"=="true" pip install -U --no-deps https://github.com/jaimergp/constructor/archive/jinja-env.zip
-  # - IF "%conda_upload%"=="true" constructor .
+  - IF "%conda_upload%"=="true" conda install -y  constructor
+  - IF "%conda_upload%"=="true" conda remove -y --force constructor
+  - IF "%conda_upload%"=="true" pip install -U --no-deps https://github.com/jaimergp/constructor/archive/jinja-env.zip
+  - IF "%conda_upload%"=="true" constructor .
 
-# artifacts:
-#   - path: 'ommprotocol*.exe'
-#     name: ommprotocol
+artifacts:
+  - path: 'ommprotocol*.exe'
+    name: ommprotocol
 
 build: off
 
-# deploy:
-#   provider: GitHub
-#   release: ommprotocol-$(APPVEYOR_REPO_TAG_NAME)
-#   description: $(APPVEYOR_REPO_COMMIT_MESSAGE)
-#   auth_token:
-#     secure: B/gWNOHhL5VYBLSIfvRA+rJmD9TYP6DcVgXi40AO23ypDUAe0ckpjkuE6TmqYlXS
-#   artifact: /ommprotocol-.*\.exe/
-#   draft: true
-#   prerelease: true
-#   on:
-#     appveyor_repo_tag: true
+deploy:
+  provider: GitHub
+  release: OMMProtocol-$(APPVEYOR_REPO_TAG_NAME)
+  description: $(APPVEYOR_REPO_COMMIT_MESSAGE)
+  auth_token:
+    secure: B/gWNOHhL5VYBLSIfvRA+rJmD9TYP6DcVgXi40AO23ypDUAe0ckpjkuE6TmqYlXS
+  artifact: /ommprotocol-.*\.exe/
+  draft: true
+  prerelease: true
+  on:
+    appveyor_repo_tag: true
