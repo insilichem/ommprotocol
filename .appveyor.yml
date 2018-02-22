@@ -20,6 +20,7 @@ install:
   - ps: if (!(Test-Path $env:PYTHON\\Scripts\\conda.exe -PathType Leaf)){ .\\devtools\\ci\\install-miniconda.ps1 }
   - ps: If ($env:APPVEYOR_REPO_TAG -eq "true" -AND $env:APPVEYOR_REPO_TAG_NAME.StartsWith('v')) { $env:conda_upload = 'true' }
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - activate
   - conda build purge
   - conda clean -y --all
   - rm -rf %PYTHON%/conda-bld/*
@@ -38,12 +39,12 @@ build: off
 
 deploy:
   provider: GitHub
-  release: OMMProtocol-$(APPVEYOR_REPO_TAG_NAME)
+  release: OMMProtocol $(APPVEYOR_REPO_TAG_NAME)
   description: $(APPVEYOR_REPO_COMMIT_MESSAGE)
   auth_token:
     secure: B/gWNOHhL5VYBLSIfvRA+rJmD9TYP6DcVgXi40AO23ypDUAe0ckpjkuE6TmqYlXS
   artifact: /ommprotocol-.*\.exe/
-  draft: true
-  prerelease: true
+  draft: false
+  prerelease: false
   on:
     appveyor_repo_tag: true
