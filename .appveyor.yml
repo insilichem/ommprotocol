@@ -39,6 +39,7 @@ build: off
 
 deploy:
   provider: GitHub
+  tag: $(APPVEYOR_REPO_TAG_NAME)
   release: OMMProtocol $(APPVEYOR_REPO_TAG_NAME)
   description: $(APPVEYOR_REPO_COMMIT_MESSAGE)
   auth_token:
