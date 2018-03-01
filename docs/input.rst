@@ -73,11 +73,28 @@ OMMProtocol ships with some `ready-to-use example protocols <https://github.com/
 - `test.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/test.yaml>`_: Protocol meant to debug a problematic simulation (those that end in ``Particle position is NaN``, for example) by dumping states and trajectories every 10 steps. It runs very slow and consumes lots of disk space!
 - `simple.yaml <https://github.com/insilichem/ommprotocol/blob/master/examples/simple.yaml>`_: Toy example to show the simplest protocol implementable in OMMProtocol.
 
+Default behaviour
+.................
+
+In principle, OMMProtocol input files can be as simple as:
+
+::
+
+    topology: output.pdb
+    stages:
+    - minimization: True
+      steps: 100000
+
+This is possible due to the chosen default values for almost every key. Specific details for each key are provided below, but globally this results in the following behaviour:
+
+- OMMProtocol will report the simulation progress to the standard output and create an Amber NetCDF checkpoint file every 1,000,000 steps. If an error occurs during the simulation, it will attempt to save a OpenMM XML file with the current state of the simulation, which, if lucky, can be used to restart the simulation or, at least, to debug the problem that could lead to that error.
+- If PDB files are being used as topology sources and no forcefield is provided and, it will default to ``amber99sbildn.xml`` and ``tip3p.xml``.
+
 
 Top-level parameters
 --------------------
 
-All the parametes are optional except stated otherwise.
+*All the parametes are optional except stated otherwise.*
 
 Input options
 .............
@@ -128,8 +145,9 @@ General conditions of simulation
 - ``barostat``: *True* for NPT, *False* for NVT. Defaults to False.
 - ``pressure``: In bar. Only used if barostat is *True*. Defaults to 1.01325.
 - ``barostat_interval``: Update interval of barostat, in steps. Defaults to 25.
-- ``restrained_atoms``, `constrained_atoms`: Parts of the system that should remain restrained (a ``k*((x-x0)^2+(y-y0)^2+(z-z0)^2)`` force is applied to minimize movement) or constrained (no movement at all) during the simulation. Supports ``mdtraj``'s `DSL queries <http://mdtraj.org/latest/atom_selection.html>`_ or a list of 0-based atom indices. Default to None (no freezing).
+- ``restrained_atoms``: Parts of the system that should remain restrained (a ``k*((x-x0)^2+(y-y0)^2+(z-z0)^2)`` force is applied to minimize movement) during the simulation. Supports ``mdtraj``'s `DSL queries <http://mdtraj.org/latest/atom_selection.html>`_ (like ``not protein``) or a list of 0-based atom indices (like ``[0, 1, 40, 55, 67]``). Default to None (no freezing).
 - ``restraint_strength``: If restraints are in use, the strength of the applied force in kJ/mol. Defaults to 5.0.
+- ``constrained_atoms``: Parts of the system that should remain constrained (no movement at all) during the simulation. Supports ``mdtraj``'s `DSL queries <http://mdtraj.org/latest/atom_selection.html>`_ (like ``not protein``) or a list of 0-based atom indices (like ``[0, 1, 40, 55, 67]``). Default to None (no freezing).
 - ``integrator``: Which integrator should be used. Langevin by default.
 - ``friction``: Friction coefficient for integrator, if needed. In 1/ps. Defaults to 1.0.
 - ``minimization_tolerance``: Threshold value minimization should converge to. Defaults to 10 kJ/mole.
@@ -154,3 +172,4 @@ Hardware options
 
 - ``platform``: Which platform to use: *CPU*, *CUDA*, *OpenCL*. If not set, OpenMM will choose the fastest available.
 - ``platform_properties``: A sub-dict of keyworkds to configure the chosen platform. Check the `OpenMM docs <http://docs.openmm.org/7.1.0/api-python/generated/simtk.openmm.openmm.Platform.html#simtk.openmm.openmm.Platform>`_ to know the supported values. Please notice all values must be strings, even booleans and ints; as a result, you should quote the values like this ``'true'``.
+

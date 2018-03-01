@@ -16,9 +16,6 @@ Introducing OMMProtocol
 A command line application to launch molecular dynamics simulations with OpenMM
 
 
-Some cool features
-------------------
-
 + No coding required - just a YAML input file!
 + Smart support for different input file formats:
     + **Topology**: PDB/PDBx, Mol2, Amber's PRMTOP, Charmm's PSF, Gromacs' TOP, Desmond's DMS
@@ -32,55 +29,23 @@ Some cool features
 + Autochunk the trajectories for easy handling.
 
 
-Installation & usage
---------------------
-Download the `latest installer <https://github.com/insilichem/ommprotocol/releases/latest>`_ or use ``conda install -c omnia -c insilichem ommprotocol`` if you already have Anaconda/Miniconda installed. Further details in :ref:`install`.
-
-When installed, you should be able to run:
-
-::
-
-    ommprotocol <inputfile.yaml>
-
-Go to :ref:`input` to read more on how to create input files for OMMProtocol.
-
-
-Get help
---------
-
-If you have problems running ``ommprotocol``, feel free to `create an issue <https://github.com/insilichem/ommprotocol/issues>`_! Also, make sure to visit our main webpage at `insilichem.com <http://www.insilichem.com>`_.
-
-
-Citation
---------
-
-Ommprotocol is scientific software, funded by public research grants (Spanish MINECO's project ``CTQ2014-54071-P``, Generalitat de Catalunya's project ``2014SGR989`` and research grant ``2015FI_B00768``, COST Action ``CM1306``). If you make use of Ommprotocol in scientific publications, please cite it. It will help measure the impact of our research and future funding! A manuscript is in progress. In the meantime, please cite this repository URL.
-
-.. code-block:: latex
-
-    @misc{ommprotocol2017,
-    author       = {Jaime Rodríguez-Guerra Pedregal and
-                    Lur Alonso-Cotchico and
-                    Lorea Velasco and
-                    Jean-Didier Maréchal},
-    title        = {OMMProtocol: A command line application to launch molecular dynamics simulations with OpenMM},
-    url          = {https://github.com/insilichem/ommprotocol}
-    }
-
-Table of contents
------------------
-
 .. toctree::
     :maxdepth: 1
+    :caption: For users
 
     install.rst
     usage.rst
     input.rst
     forcefields.rst
 
-Indices and tables
-------------------
+.. toctree::
+    :maxdepth: 1
+    :caption: For developers
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    development.rst
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Support
+
+    support.rst
