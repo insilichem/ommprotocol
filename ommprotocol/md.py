@@ -177,7 +177,7 @@ class Stage(object):
     total_stages : int, optional
     """
     _PROJECTNAME = random_string(length=5)
-    _stage_number = [0]
+    _stage_index = [0]
 
     def __init__(self, handler, positions=None, velocities=None, box=None,
                  steps=0, minimization=False, barostat=False, temperature=300,
@@ -228,7 +228,7 @@ class Stage(object):
         self.trajectory = trajectory
         self.trajectory_every = int(trajectory_every)
         self.trajectory_new_every = int(trajectory_new_every)
-        self.trajectory_atom_subset = self._mask_selection(trajectory_atom_subset)
+        self.trajectory_atom_subset = self.subset(trajectory_atom_subset)
         self.restart = restart
         self.restart_every = int(restart_every)
         self.report = report
@@ -245,7 +245,7 @@ class Stage(object):
         self._trajectory_reporter = None
         self._restart_reporter = None
         self._mass_options = {}
-        self._stage_number[0] += 1
+        self._stage_index[0] += 1
 
     def run(self):
         """
@@ -263,7 +263,7 @@ class Stage(object):
             Periodic conditions box vectors
         """
         if self.verbose:
-            status = '#{}'.format(self._stage_number[0])
+            status = '#{}'.format(self.stage_index)
             if self.total_stages is not None:
                 status += '/{}'.format(self.total_stages)
             status += ': {}'.format(self.name)
@@ -584,8 +584,20 @@ class Stage(object):
         force.addPerParticleParameter('z0')
         return force
 
+    @property
+    def stage_index(self):
+        return self._stage_index[0]
+
+    @stage_index.setter
+    def stage_index(self, value):
+        self._stage_index[0] = value
+
     def new_filename(self, suffix='', prefix='', avoid_overwrite=True):
-        filename = '{}{}_{}{}'.format(prefix, self.project_name, self.name, suffix)
+        fn_template = '{prefix}{project}_{index:0{index_len}d}_{stage}{suffix}'
+        filename = fn_template.format(prefix=prefix, project=self.project_name,
+                                      index=self.stage_index, stage=self.name,
+                                      suffix=suffix,
+                                      index_len=len(str(self.total_stages)))
         path = os.path.join(self.outputpath, filename)
         if avoid_overwrite:
             path = assert_not_exists(path)
@@ -640,6 +652,3 @@ class Stage(object):
         for reporter in self.simulation.reporters:
             if not isinstance(reporter, app.StateDataReporter):
                 reporter.report(self.simulation, state)
-
-    def _mask_selection(self, expression):
-        pass
