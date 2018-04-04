@@ -13,10 +13,11 @@ Trajectory analysis routines
 """
 
 import argparse
+import os
 import sys
 import matplotlib.pyplot as plt
 plt.ioff()
-from .utils import extant_file
+from .utils import extant_file, sort_key_for_numeric_suffixes
 
 
 def plot_log(paths):
@@ -27,13 +28,40 @@ def plot_log(paths):
     plt.show()
 
 
-def plot_rmsd(topology, trajectory):
+def plot_rmsd(trajectories, topology=None, subset=None, output='rmsd.dat', chunksize=100):
     import mdtraj
-    t = mdtraj.load(trajectory, discard_overlapping_frames=True, top=topology)
-    rmsd = mdtraj.rmsd(t, t)*10.0 # nm->Angstroms!
-    plt.plot(rmsd)
+    import numpy as np
+    from tqdm import tqdm
+    if topology:
+        topology = mdtraj.load_topology(topology)
+    if subset:
+        subset = topology.select(subset)
+    trajectories = sorted(trajectories, key=sort_key_for_numeric_suffixes)
+    first_frame = mdtraj.load_frame(trajectories[0], 0, top=topology)
+    frame_size = first_frame.xyz[0].nbytes
+    rmsds = []
+    for trajectory in tqdm(trajectories, unit='file'):
+        _, ext = os.path.splitext(trajectory)
+        total, unit_scale = None, None
+        if ext.lower() == '.dcd':
+            n_frames = round(os.path.getsize(trajectory) / frame_size, -1 * len(str(chunksize)[1:]))
+            total = int(n_frames/chunksize)
+            unit_scale = chunksize
+        itertraj = mdtraj.iterload(trajectory, top=topology, chunk=chunksize)
+        for chunk in tqdm(itertraj, unit='frames', total=total, unit_scale=unit_scale,
+                          postfix={'traj': trajectory}):
+            rmsd = mdtraj.rmsd(chunk, first_frame, atom_indices=subset) * 10.0 # nm->A
+            rmsds.append(rmsd)
+
+    rmsds = np.concatenate(rmsds)
+    with open(output, 'w') as f:
+        f.write('\n'.join(map(str, rmsds)))
+    print('\nWrote RMSD values to', output)
+    print('Plotting results...')
+    plt.plot(rmsds)
     fig = plt.gca()
-    fig.set_title(', '.join(trajectory))
+    fig.set_title('{}{}'.format(trajectories[0], ' and {} more'.format(len(trajectories[1:])
+                                                 if len(trajectories) > 1 else '')))
     fig.set_xlabel('Frames')
     fig.set_ylabel('RMSD (A)')
     plt.show()
@@ -49,10 +77,16 @@ def main():
     p_log.set_defaults(func=plot_log)
 
     # 'rmsd' subcommand
-    p_rmsd = sp.add_parser('rmsd', help='Plot RMSD of a trajectory')
-    p_rmsd.add_argument('topology', help='Topology file', type=extant_file)
-    p_rmsd.add_argument('trajectory', help='Trajectory file', type=extant_file,
+    p_rmsd = sp.add_parser('rmsd', help='Plot RMSD of one or more (sorted) trajectories')
+    p_rmsd.add_argument('trajectories', help='Trajectory file(s)', type=extant_file,
                         nargs='+')
+    p_rmsd.add_argument('-t', '--topology', help='Topology file', type=extant_file)
+    p_rmsd.add_argument('-s', '--subset', help='DSL query to select atoms in Topology',
+                        type=str, default=None)
+    p_rmsd.add_argument('-o', '--output', help='Plain-text file where to write RMSD results',
+                        type=str, default='rmsd.dat')
+    p_rmsd.add_argument('-c', '--chunksize', help='Frames to be loaded at once',
+                        type=int, default=100)
     p_rmsd.set_defaults(func=plot_rmsd)
 
     # Autocall each requested method

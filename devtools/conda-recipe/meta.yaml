@@ -27,8 +27,11 @@ requirements:
     - netcdf4
     - jinja2
     - pdbfixer
-    - matplotlib
     - menuinst # [win]
+    # These are for ommanalyze
+    - matplotlib
+    - tqdm
+    - pandas
 
 test:
   requires:
