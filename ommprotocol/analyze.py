@@ -67,6 +67,55 @@ def plot_rmsd(trajectories, topology=None, subset=None, output='rmsd.dat', chunk
     plt.show()
 
 
+def inspect_topology(topology, subset=None):
+    def usage():
+        print('(i) Subset queries must be either a valid MDTraj DSL query (visit URL\n'
+              '    http://mdtraj.org/latest/atom_selection.html) OR a list of atom indices:')
+        print('    - resname UNK or resname GLN')
+        print('    - [0, 1, 2, 3, 4]')
+    import mdtraj
+    import numpy as np
+    print('Topology', topology)
+    top = mdtraj.load_topology(topology)
+    print('***')
+    print('Contents:')
+    print('-', top.n_chains, 'chains')
+    print('-', top.n_residues, 'residues')
+    print('-', top.n_atoms, 'atoms')
+    print('-', top.n_bonds, 'bonds')
+    print('***')
+    if subset is not None:
+        indices = np.empty((0,))
+        try:
+            indices = top.select(subset)
+        except Exception as e1:
+            try:
+                eval_subset = eval(subset)
+                if isinstance(eval_subset, (list, tuple)) and \
+                all(isinstance(i, int) for i in eval_subset):
+                    indices = np.array(eval_subset)
+            except Exception as e2:
+                print('!!! Could not parse subset `{}`'.format(subset), 'due to:')
+                print('    - MDTraj select raised {}:'.format(e1.__class__.__name__))
+                print('     ', str(e1).splitlines()[0])
+                print('    - Python eval raised {}:'.format(e2.__class__.__name__))
+                print('     ', e2)
+                usage()
+                return
+        print('\nSubset `{}` will select {} atoms.'.format(subset, indices.size))
+        if indices.size:
+            df, dfbonds = top.to_dataframe()
+            report = df.iloc[indices].drop(['serial'], axis=1).to_string()
+            if indices.size < 5000:
+                print(report)
+            else:
+                print('Dumping table to file {}.subset...'.format(topology))
+                with open('{}.subset'.format(topology), 'w') as f:
+                    f.write(report)
+        else:
+            usage()
+
+
 def main():
     p = argparse.ArgumentParser()
     sp = p.add_subparsers()
@@ -88,6 +137,13 @@ def main():
     p_rmsd.add_argument('-c', '--chunksize', help='Frames to be loaded at once',
                         type=int, default=100)
     p_rmsd.set_defaults(func=plot_rmsd)
+
+    # 'top' subcommand
+    p_top = sp.add_parser('top', help='Inspect topologies and subsets')
+    p_top.add_argument('topology', type=extant_file)
+    p_top.add_argument('-s', '--subset', help='DSL query to select atoms in Topology',
+                        type=str, default=None)
+    p_top.set_defaults(func=inspect_topology)
 
     # Autocall each requested method
     cli_args = p.parse_args()

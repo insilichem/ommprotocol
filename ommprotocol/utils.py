@@ -25,7 +25,6 @@ except ImportError:
     import _thread as thread
 import threading
 
-from simtk import openmm as mm
 
 if sys.version_info.major == 3:
     raw_input = input
@@ -66,6 +65,7 @@ def assertinstance(obj, types):
 
 
 def available_platforms():
+    from simtk import openmm as mm
     names = []
     for i in range(mm.Platform.getNumPlatforms()):
         platform = mm.Platform.getPlatform(i)
@@ -74,6 +74,7 @@ def available_platforms():
 
 
 def available_platforms_properties():
+    from simtk import openmm as mm
     for i in range(1, mm.Platform.getNumPlatforms()):
         platform = mm.Platform.getPlatform(i)
         name = platform.getName()
