@@ -228,7 +228,7 @@ class Stage(object):
         self.trajectory = trajectory
         self.trajectory_every = int(trajectory_every)
         self.trajectory_new_every = int(trajectory_new_every)
-        self.trajectory_atom_subset = self.subset(trajectory_atom_subset)
+        self.trajectory_atom_subset = self.subset(trajectory_atom_subset) if trajectory_atom_subset else None
         self.restart = restart
         self.restart_every = int(restart_every)
         self.report = report
