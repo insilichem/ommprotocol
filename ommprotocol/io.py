@@ -911,7 +911,7 @@ def prepare_handler(cfg):
     topology = sanitize_path_for_file(cfg.pop('topology'), _path)
 
     if 'checkpoint' in cfg:
-        restart_path = sanitize_path_for_file(cfg['checkpoint'], _path)
+        restart_path = sanitize_path_for_file(cfg.pop('checkpoint'), _path)
         restart = Restart.load(restart_path)
         positions = restart.positions
         velocities = restart.velocities
