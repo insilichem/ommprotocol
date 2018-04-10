@@ -28,7 +28,8 @@ def plot_log(paths):
     plt.show()
 
 
-def plot_rmsd(trajectories, topology=None, subset=None, output='rmsd.dat', chunksize=100):
+def plot_rmsd(trajectories, topology=None, subset=None, output='rmsd.dat', chunksize=100,
+              reimage=False):
     import mdtraj
     import numpy as np
     from tqdm import tqdm
@@ -39,6 +40,8 @@ def plot_rmsd(trajectories, topology=None, subset=None, output='rmsd.dat', chunk
     trajectories = sorted(trajectories, key=sort_key_for_numeric_suffixes)
     first_frame = mdtraj.load_frame(trajectories[0], 0, top=topology)
     frame_size = first_frame.xyz[0].nbytes
+    if reimage:
+        first_frame.image_molecules(inplace=True)
     rmsds = []
     for trajectory in tqdm(trajectories, unit='file'):
         _, ext = os.path.splitext(trajectory)
@@ -48,8 +51,11 @@ def plot_rmsd(trajectories, topology=None, subset=None, output='rmsd.dat', chunk
             total = int(n_frames/chunksize)
             unit_scale = chunksize
         itertraj = mdtraj.iterload(trajectory, top=topology, chunk=chunksize)
-        for chunk in tqdm(itertraj, unit='frames', total=total, unit_scale=unit_scale,
-                          postfix={'traj': trajectory}):
+        tqdm_kwargs = {'total': total, 'unit': 'frames', 'unit_scale': unit_scale,
+                       'postfix': {'traj': trajectory}}
+        for chunk in tqdm(itertraj, **tqdm_kwargs):
+            if reimage:
+                chunk.image_molecules(inplace=True)
             rmsd = mdtraj.rmsd(chunk, first_frame, atom_indices=subset) * 10.0 # nm->A
             rmsds.append(rmsd)
 
@@ -136,6 +142,8 @@ def main():
                         type=str, default='rmsd.dat')
     p_rmsd.add_argument('-c', '--chunksize', help='Frames to be loaded at once',
                         type=int, default=100)
+    p_rmsd.add_argument('-i', '--reimage', help='Wrap coordinates in central PBC image (SLOW!)',
+                        default=False, action='store_true')
     p_rmsd.set_defaults(func=plot_rmsd)
 
     # 'top' subcommand
