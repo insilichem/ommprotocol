@@ -111,7 +111,7 @@ def sanitize_args_for_file(args, config_file):
     if isinstance(args, basestring):
         args = (args,)
     path = sanitize_path_for_file(args[0], config_file)
-    return (path,) + args[1:]
+    return (path,) + tuple(args[1:])
 
 
 def sanitize_path_for_file(path, config_file):
