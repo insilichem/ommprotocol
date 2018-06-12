@@ -7,7 +7,7 @@
 
 import pytest
 from distutils.spawn import find_executable
-from ommprotocol.io import SystemHandler, Positions
+from ommprotocol.io import SystemHandler, Positions, prepare_handler
 from ommprotocol.md import Stage
 from conftest import get_file
 
@@ -30,5 +30,23 @@ def test_formats(top, pos):
     top = get_file(top)
     kw = dict(positions=Positions.load(get_file(pos))) if pos else {}
     handler = SystemHandler.load(top, **kw)
+    stage = Stage(handler, **STAGE_OPTIONS)
+    stage.run()
+
+
+def test_prepare_handler():
+    cfg = {'topology': get_file('input.prmtop'),
+           'positions': get_file('input.inpcrd')}
+    handler = prepare_handler(cfg)
+    assert handler.topology.getNumAtoms() == len(handler.positions) == 2269
+    stage = Stage(handler, **STAGE_OPTIONS)
+    stage.run()
+
+
+def test_prepare_handler_tuples():
+    cfg = {'topology': get_file('input.prmtop'),
+           'positions': (get_file('input.inpcrd'),) }
+    handler = prepare_handler(cfg)
+    assert handler.topology.getNumAtoms() == len(handler.positions) == 2269
     stage = Stage(handler, **STAGE_OPTIONS)
     stage.run()

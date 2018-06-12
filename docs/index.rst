@@ -19,9 +19,9 @@ A command line application to launch molecular dynamics simulations with OpenMM
 + No coding required - just a YAML input file!
 + Smart support for different input file formats:
     + **Topology**: PDB/PDBx, Mol2, Amber's PRMTOP, Charmm's PSF, Gromacs' TOP, Desmond's DMS
-    + **Positions**: PDB, COOR, INPCRD, CRD, GRO
+    + **Positions**: PDB, COOR, INPCRD, CRD, GRO, DCD
     + **Velocities**: PDB, VEL
-    + **Box vectors**: PDB, XSC, CSV, INPCRD, GRO
+    + **Box vectors**: XSC, CSV, PDB, GRO, INPCRD, DCD
     + A fallback method is implemented and will attempt to load everything else that might be supported by `ParmEd <http://parmed.github.io/ParmEd/html/index.html>`_.
 + Choose your preferred **trajectory** format (PDB, PDBx, DCD, HDF5, NETCDF, MDCRD) and **checkpoints** (Amber's, CHARMM's, OpenMM XML states).
 + Live report of simulation progress, with estimated ETA and speed.

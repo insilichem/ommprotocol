@@ -49,7 +49,7 @@ from parmed.namd import NamdBinCoor, NamdBinVel
 from parmed.openmm import RestartReporter, NetCDFReporter, MdcrdReporter
 from openmoltools.utils import create_ffxml_file
 # Own
-from .utils import sanitize_path_for_file, ignored_exceptions, warned_getattr, extant_file
+from .utils import sanitize_args_for_file, ignored_exceptions, warned_getattr, extant_file
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
@@ -460,7 +460,8 @@ class Positions(MultiFormatLoader):
                 'coor': cls.from_namd,
                 'gro': cls.from_gromacs,
                 'inpcrd': cls.from_amber,
-                'crd': cls.from_charmm}[ext]
+                'crd': cls.from_charmm,
+                'dcd': cls.from_mdtraj}[ext]
 
     @classmethod
     def from_pdb(cls, path):
@@ -483,6 +484,10 @@ class Positions(MultiFormatLoader):
     @classmethod
     def from_charmm(cls, path):
         return CharmmCrdFile(path).positions
+
+    @classmethod
+    def from_mdtraj(cls, path, frame):
+        return mdtraj.load_frame(path, frame).xyz[0]
 
     @classmethod
     def from_parmed(cls, path):
@@ -540,7 +545,8 @@ class BoxVectors(MultiFormatLoader):
                 'csv': cls.from_csv,
                 'pdb': cls.from_pdb,
                 'gro': cls.from_gromacs,
-                'inpcrd': cls.from_amber}[ext]
+                'inpcrd': cls.from_amber,
+                'dcd': cls.from_mdtraj}[ext]
 
     @classmethod
     def from_xsc(cls, path):
@@ -615,6 +621,10 @@ class BoxVectors(MultiFormatLoader):
     @classmethod
     def from_gromacs(cls, path):
         return GromacsGroFile(path).getPeriodicBoxVectors()
+
+    @classmethod
+    def from_mdtraj(cls, path, frame):
+        return mdtraj.load_frame(path, frame).unitcell_vectors[0]
 
     @classmethod
     def from_parmed(cls, path):
@@ -906,29 +916,29 @@ def prepare_handler(cfg):
     Load all files into single object.
     """
     positions, velocities, box = None, None, None
-    _path = cfg['_path']
+    _path = cfg.get('_path', './')
     forcefield = cfg.pop('forcefield', None)
-    topology = sanitize_path_for_file(cfg.pop('topology'), _path)
+    topology_args = sanitize_args_for_file(cfg.pop('topology'), _path)
 
     if 'checkpoint' in cfg:
-        restart_path = sanitize_path_for_file(cfg.pop('checkpoint'), _path)
-        restart = Restart.load(restart_path)
+        restart_args = sanitize_args_for_file(cfg.pop('checkpoint'), _path)
+        restart = Restart.load(*restart_args)
         positions = restart.positions
         velocities = restart.velocities
         box = restart.box
 
     if 'positions' in cfg:
-        positions_path = sanitize_path_for_file(cfg.pop('positions'), _path)
-        positions = Positions.load(positions_path)
-        box = BoxVectors.load(positions_path)
+        positions_args = sanitize_args_for_file(cfg.pop('positions'), _path)
+        positions = Positions.load(*positions_args)
+        box = BoxVectors.load(*positions_args)
 
     if 'velocities' in cfg:
-        velocities_path = sanitize_path_for_file(cfg.pop('velocities'), _path)
-        velocities = Velocities.load(velocities_path)
+        velocities_args = sanitize_args_for_file(cfg.pop('velocities'), _path)
+        velocities = Velocities.load(*velocities_args)
 
     if 'box' in cfg:
-        box_path = sanitize_path_for_file(cfg.pop('box'), _path)
-        box = BoxVectors.load(box_path)
+        box_args = sanitize_args_for_file(cfg.pop('box'), _path)
+        box = BoxVectors.load(*box_args)
 
     options = {}
     for key in 'positions velocities box forcefield'.split():
@@ -936,7 +946,7 @@ def prepare_handler(cfg):
         if value is not None:
             options[key] = value
 
-    return SystemHandler.load(topology, **options)
+    return SystemHandler.load(*topology_args, **options)
 
 
 def prepare_system_options(cfg, defaults=None):

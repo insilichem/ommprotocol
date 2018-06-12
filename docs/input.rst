@@ -94,16 +94,16 @@ This is possible due to the chosen default values for almost every key. Specific
 Top-level parameters
 --------------------
 
-*All the parametes are optional except stated otherwise.*
+*All the parameters are optional except stated otherwise.*
 
 Input options
 .............
 
-- ``topology``: Main input file. Should contain, at least, the topology, but it can also contain positions, velocities, PBC vectors, forcefields... Required.
-- ``positions``: File with the initial coordinates of the system. Overrides those in topology, if needed. Required if the topology does not provide positions.
-- ``velocities``: File containing the initial velocities of this stage. If not set, they will be set to the requested temperature.
-- ``box_vectors``: File with replacement periodic box vectors, instead of those in the topology or positions file. Supported file types: XSC.
-- ``checkpoint``: Restart simulation from this file. It can provide one or more of the options above.
+- ``topology``: Main input file. Should contain, at least, the topology, but it can also contain positions, velocities, PBC vectors, forcefields... Required. Supports PDB/PDBx, Mol2, Amber's PRMTOP, Charmm's PSF, Gromacs' TOP, Desmond's DMS.
+- ``positions``: File with the initial coordinates of the system. Overrides those in topology, if needed. Required if the topology does not provide positions. If the file is a trajectory, a frame must be specified with a list: ``[ path_to_trajectory.dcd, 1044]``. Supports PDB, COOR, INPCRD, CRD, GRO, DCD.
+- ``velocities``: File containing the initial velocities of this stage. If not set, they will be set to the requested temperature. Supports PDB, VEL.
+- ``box_vectors``: File with replacement periodic box vectors, instead of those in the topology or positions file. If the file is a trajectory, a frame must be specified with a list: ``[ path_to_trajectory.dcd, 1044]``. Supports XSC, CSV, PDB, GRO, INPCRD, DCD.
+- ``checkpoint``: Restart simulation from this file. It can provide one or more of the options above. Supports STATE.XML, RS.
 - ``forcefield``: Which forcefields should be used, if not provided in topology. Required for PDB topologies. More details on :ref:`forcefields`.
 - ``charmm_parameters``: CHARMM forcefield. Required for PSF topologies.
 
