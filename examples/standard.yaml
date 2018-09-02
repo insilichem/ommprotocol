@@ -36,6 +36,15 @@ pressure: 1.01325
 barostat_interval: 100
 minimization_max_iterations: 1000
 
+# Constraints and restraints
+restrained_atoms: backbone
+restraint_strength: 5 # kcal/mol/A2
+distance_restrained_atoms: [[0, 1], ['resid 12 and name OE1', 'resid13 and name OE2']]
+# can be also provided as a flat list [0, 1, 'resid 12 and name OE1', 'resid13 and name OE2']
+distance_restraint_length: [current, 10] # in nm
+# can be also provided as a list
+distance_restraint_strength: 5 # kcal/mol/A2
+
 # OpenMM system options
 nonbondedMethod: PME
 nonbondedCutoff: 1.0 # nm

@@ -80,9 +80,10 @@ def inspect_topology(topology, subset=None):
         print('    - resname UNK or resname GLN')
         print('    - [0, 1, 2, 3, 4]')
     import mdtraj
+    from ommprotocol.io import SystemHandler
     import numpy as np
+    top = mdtraj.Topology.from_openmm(SystemHandler.load(topology).topology)
     print('Topology', topology)
-    top = mdtraj.load_topology(topology)
     print('***')
     print('Contents:')
     print('-', top.n_chains, 'chains')

@@ -22,6 +22,7 @@ import sys
 from contextlib import contextmanager
 import logging
 # 3rd party
+import numpy as np
 from simtk import unit as u
 from simtk import openmm as mm
 from simtk.openmm import app
@@ -35,6 +36,8 @@ from .utils import (random_string, assert_not_exists, timed_input,
 logger = logging.getLogger(__name__)
 OPENMM_VERSION = tuple(map(int, mm.__version__.split('.')))
 
+if sys.version_info.major == 3:
+    basestring = str
 
 ###########################
 # Defaults
@@ -123,6 +126,17 @@ class Stage(object):
         Parts of the system that should remain restrained or constrained
         during the stage. Available values in SELECTORS dict.
         If None, no atoms will be fixed.
+    distance_restrained_atoms : list of lists
+        Pairs of atom indices that will be distance restrained
+    restraint_distance_length : float or list of floats
+        Distances at which ``distance_restrained_atoms`` should be. It can be
+        a single value (all pairs will be restrained at this distance), or n
+        values, n being the number of pairs to be assigned to. If the value is
+        'initial', use the initial distance.
+    restraint_distance_strength : float or list of floats
+        Force constants for ``distance_restrained_atoms``. It can be
+        a single value (all pairs will be restrained at this distance), or n
+        values, n being the number of pairs to be assigned to.
     minimization : bool, optional
         If True, minimize before MD
     minimization_tolerance : float, optional, default=10 kJ/mol
@@ -191,6 +205,7 @@ class Stage(object):
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None, friction=1.0,
+                 distance_restrained_atoms=None, distance_restraint_length=2, distance_restraint_strength=5,
                  minimization_tolerance=10, minimization_max_iterations=10000,
                  save_state_at_end=True, attempt_rescue=True,
                  total_stages=None, verbose=True,
@@ -208,6 +223,10 @@ class Stage(object):
         self.restrained_atoms = restrained_atoms
         self.restraint_strength = restraint_strength
         self.constrained_atoms = constrained_atoms
+        self.distance_restrained_atoms = np.reshape(distance_restrained_atoms, (-1, 2)) \
+                                         if distance_restrained_atoms else None
+        self.distance_restraint_length = distance_restraint_length
+        self.distance_restraint_strength = distance_restraint_strength
         # Simulation conditions
         self.steps = int(steps)
         self.minimization = minimization
@@ -262,7 +281,7 @@ class Stage(object):
         -------
         positions, velocities : unit.Quantity([natoms, 3])
             Position, velocity of each atom in the system
-        box: unit.Quantity([1, 3])
+        box : unit.Quantity([1, 3])
             Periodic conditions box vectors
         """
         if self.verbose:
@@ -270,14 +289,19 @@ class Stage(object):
             if self.total_stages is not None:
                 status += '/{}'.format(self.total_stages)
             status += ': {}'.format(self.name)
-            if self.restrained_atoms:
-                status += ' [Restrained {}]'.format(self.restrained_atoms)
-            elif self.constrained_atoms:
-                status += ' [Constrained {}]'.format(self.constrained_atoms)
+            if any([self.restrained_atoms, self.constrained_atoms, self.distance_restrained_atoms]):
+                pieces = []
+                if self.restrained_atoms:
+                    pieces.append('restrained {}'.format(self.restrained_atoms))
+                if self.constrained_atoms:
+                    pieces.append('constrained {}'.format(self.constrained_atoms))
+                if self.distance_restrained_atoms is not None:
+                    pieces.append('distance restrained for {} atom pairs'.format(len(self.distance_restrained_atoms)))
+                status += ' [{}]'.format(', '.join(pieces))
             logger.info(status)
 
         # Add forces
-        if self.restrained_atoms:
+        if self.restrained_atoms or self.distance_restrained_atoms:
             self.apply_restraints()
         if self.constrained_atoms:
             self.apply_constraints()
@@ -458,9 +482,110 @@ class Stage(object):
             system.setParticleMass(int(i), 0.0)
 
     def apply_restraints(self):
-        force = self.restraint_force(self.restraint_strength)
-        indices = self.subset(self.restrained_atoms)
-        self.apply_force(force, indices)
+        if self.restrained_atoms:
+            indices = self.subset(self.restrained_atoms)
+            r_force = self.restraint_force(indices, self.restraint_strength)
+            self.system.addForce(r_force)
+
+        if self.distance_restrained_atoms is not None:
+            atoms = self.distance_restrained_atoms
+            if isinstance(self.distance_restraint_length, (int, float, basestring)):
+                distances = [self.distance_restraint_length] * atoms.shape[0]
+            elif len(self.distance_restraint_length) == atoms.shape[0]:
+                distances = self.distance_restraint_length
+            else:
+                raise ValueError('Restraint distances do not match '
+                                 'number of distance restrained pairs.')
+
+            if isinstance(self.distance_restraint_strength, (int, float)):
+                strengths = [self.distance_restraint_strength] * atoms.shape[0]
+            elif len(self.distance_restraint_strength) == atoms.shape[0]:
+                strengths = self.distance_restraint_strength
+            else:
+                raise ValueError('Restraint distance strengths do not '
+                                 'match number of distance restrained pairs.')
+
+            d_force = self.distance_restraint_force(atoms, distances, strengths)
+            self.system.addForce(d_force)
+
+    def restraint_force(self, indices=None, strength=5.0):
+        """
+        Force that restrains atoms to fix their positions, while allowing
+        tiny movement to resolve severe clashes and so on.
+
+        Returns
+        -------
+        force : simtk.openmm.CustomExternalForce
+            A custom force to restrain the selected atoms
+        """
+        if self.system.usesPeriodicBoundaryConditions():
+            expression = 'k*periodicdistance(x, y, z, x0, y0, z0)^2'
+        else:
+            expression = 'k*((x-x0)^2 + (y-y0)^2 + (z-z0)^2)'
+        force = mm.CustomExternalForce(expression)
+        force.addGlobalParameter('k', strength*u.kilocalories_per_mole/u.angstroms**2)
+        force.addPerParticleParameter('x0')
+        force.addPerParticleParameter('y0')
+        force.addPerParticleParameter('z0')
+        positions = self.positions if self.positions is not None else self.handler.positions
+        if indices is None:
+            indices = range(self.handler.topology.getNumAtoms())
+        for i, index in enumerate(indices):
+            force.addParticle(i, positions[index].value_in_unit(u.nanometers))
+        return force
+
+    def distance_restraint_force(self, atoms, distances, strengths):
+        """
+        Parameters
+        ----------
+        atoms : tuple of tuple of int or str
+            Pair of atom indices to be restrained, with shape (n, 2),
+            like ((a1, a2), (a3, a4)). Items can be str compatible with MDTraj DSL.
+        distances : tuple of float
+            Equilibrium distances for each pair
+        strengths : tuple of float
+            Force constant for each pair
+        """
+        system = self.system
+        force = mm.HarmonicBondForce()
+        force.setUsesPeriodicBoundaryConditions(self.system.usesPeriodicBoundaryConditions())
+        for pair, distance, strength in zip(atoms, distances, strengths):
+            indices = []
+            for atom in pair:
+                if isinstance(atom, str):
+                    index = self.subset(atom)
+                    if len(index) != 1:
+                        raise ValueError('Distance restraint for selection `{}` returns != 1 atom!: {}'
+                                         .format(atom, index))
+                    indices.append(int(index[0]))
+                elif isinstance(atom, (int, float)):
+                    indices.append(int(atom))
+                else:
+                    raise ValueError('Distance restraint atoms must be int or str DSL selections')
+            if distance == 'current':
+                pos = self.positions or system.positions
+                distance = np.linalg.norm(pos[indices[0]] - pos[indices[1]])
+
+            force.addBond(indices[0], indices[1], distance*u.nanometers,
+                          strength*u.kilocalories_per_mole/u.angstroms**2)
+        return force
+
+    def subset(self, selector):
+        """
+        Returns a list of atom indices corresponding to a MDTraj DSL
+        query. Also will accept list of numbers, which will be coerced
+        to int and returned.
+        """
+        if isinstance(selector, (list, tuple)):
+            return map(int, selector)
+        selector = SELECTORS.get(selector, selector)
+        mdtop = MDTrajTopology.from_openmm(self.handler.topology)
+        return mdtop.select(selector)
+
+    @property
+    def system_mass(self):
+        system_mass = sum(a.element.mass._value for a in self.handler.topology.atoms())
+        return system_mass * u.dalton
 
     @property
     def progress_reporter(self):
@@ -545,48 +670,6 @@ class Stage(object):
         except ValueError:
             pass
         self._restart_reporter = None
-
-    def subset(self, selector):
-        """
-        Returns a list of atom indices corresponding to a MDTraj DSL
-        query. Also will accept list of numbers, which will be coerced
-        to int and returned.
-        """
-        if isinstance(selector, (list, tuple)):
-            return map(int, selector)
-        selector = SELECTORS.get(selector, selector)
-        mdtop = MDTrajTopology.from_openmm(self.handler.topology)
-        return mdtop.select(selector)
-
-    @property
-    def system_mass(self):
-        system_mass = sum(a.element.mass._value for a in self.handler.topology.atoms())
-        return system_mass * u.dalton
-
-    def apply_force(self, force, indices=None):
-        positions = self.positions if self.positions is not None else self.handler.positions
-        if indices is None:
-            indices = range(self.handler.topology.getNumAtoms())
-        for i, index in enumerate(indices):
-            force.addParticle(i, positions[index].value_in_unit(u.nanometers))
-
-    @staticmethod
-    def restraint_force(strength=5.0):
-        """
-        Force that restrains atoms to fix their positions, while allowing
-        tiny movement to resolve severe clashes and so on.
-
-        Returns
-        -------
-        force : simtk.openmm.CustomExternalForce
-            A custom force to restrain the selected atoms
-        """
-        force = mm.CustomExternalForce('k*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
-        force.addGlobalParameter('k', strength*u.kilocalories_per_mole/u.angstroms**2)
-        force.addPerParticleParameter('x0')
-        force.addPerParticleParameter('y0')
-        force.addPerParticleParameter('z0')
-        return force
 
     @property
     def stage_index(self):
