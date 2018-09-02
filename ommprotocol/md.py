@@ -289,14 +289,14 @@ class Stage(object):
             if self.total_stages is not None:
                 status += '/{}'.format(self.total_stages)
             status += ': {}'.format(self.name)
-            if any([self.restrained_atoms, self.constrained_atoms, self.distance_restrained_atoms]):
-                pieces = []
-                if self.restrained_atoms:
-                    pieces.append('restrained {}'.format(self.restrained_atoms))
-                if self.constrained_atoms:
-                    pieces.append('constrained {}'.format(self.constrained_atoms))
-                if self.distance_restrained_atoms is not None:
-                    pieces.append('distance restrained for {} atom pairs'.format(len(self.distance_restrained_atoms)))
+            pieces = []
+            if self.restrained_atoms is not None:
+                pieces.append('restrained {}'.format(self.restrained_atoms))
+            if self.constrained_atoms is not None:
+                pieces.append('constrained {}'.format(self.constrained_atoms))
+            if self.distance_restrained_atoms is not None:
+                pieces.append('distance restrained for {} atom pairs'.format(len(self.distance_restrained_atoms)))
+            if pieces:
                 status += ' [{}]'.format(', '.join(pieces))
             logger.info(status)
 
