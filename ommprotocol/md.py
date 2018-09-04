@@ -301,10 +301,9 @@ class Stage(object):
             logger.info(status)
 
         # Add forces
-        if self.restrained_atoms or self.distance_restrained_atoms:
-            self.apply_restraints()
-        if self.constrained_atoms:
-            self.apply_constraints()
+        self.apply_restraints()
+        self.apply_constraints()
+
         if self.barostat:
             self.apply_barostat()
 
@@ -476,10 +475,11 @@ class Stage(object):
                                                    self.barostat_interval))
 
     def apply_constraints(self):
-        indices = self.subset(self.constrained_atoms)
-        system = self.system
-        for i in indices:
-            system.setParticleMass(int(i), 0.0)
+        if self.constrained_atoms is not None:
+            indices = self.subset(self.constrained_atoms)
+            system = self.system
+            for i in indices:
+                system.setParticleMass(int(i), 0.0)
 
     def apply_restraints(self):
         if self.restrained_atoms:
