@@ -128,12 +128,12 @@ class Stage(object):
         If None, no atoms will be fixed.
     distance_restrained_atoms : list of lists
         Pairs of atom indices that will be distance restrained
-    restraint_distance_length : float or list of floats
+    distance_restraint_length : float or list of floats
         Distances at which ``distance_restrained_atoms`` should be. It can be
         a single value (all pairs will be restrained at this distance), or n
         values, n being the number of pairs to be assigned to. If the value is
         'initial', use the initial distance.
-    restraint_distance_strength : float or list of floats
+    distance_restraint_strength : float or list of floats
         Force constants for ``distance_restrained_atoms``. It can be
         a single value (all pairs will be restrained at this distance), or n
         values, n being the number of pairs to be assigned to.
@@ -205,10 +205,10 @@ class Stage(object):
                  restart=None, restart_every=1000000, report=True, report_every=1000,
                  project_name=None, name=None, restrained_atoms=None,
                  restraint_strength=5, constrained_atoms=None, friction=1.0,
-                 distance_restrained_atoms=None, distance_restraint_length=2, distance_restraint_strength=5,
+                 distance_restrained_atoms=None, distance_restraint_length=2,
+                 distance_restraint_strength=5, total_stages=None, verbose=True,
                  minimization_tolerance=10, minimization_max_iterations=10000,
                  save_state_at_end=True, attempt_rescue=True,
-                 total_stages=None, verbose=True,
                  **kwargs):
         for k in kwargs:
             if not k.startswith('_'):
