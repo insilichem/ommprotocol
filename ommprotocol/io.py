@@ -126,6 +126,7 @@ class MultiFormatLoader(object):
     def from_parmed(cls, *args, **kwargs):
         raise NotImplementedError('ParmEd fallback strategy not available here.')
 
+
 class InputContainer(object):
 
     """
@@ -218,7 +219,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                 'pickle3': cls.from_pickle}[ext]
 
     @classmethod
-    def from_pdb(cls, path, forcefield=None, loader=PDBFile, **kwargs):
+    def from_pdb(cls, path, forcefield=None, loader=PDBFile, strict=True, **kwargs):
         """
         Loads topology, positions and, potentially, velocities and vectors,
         from a PDB or PDBx file
@@ -241,7 +242,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         positions = kwargs.pop('positions', pdb.positions)
         velocities = kwargs.pop('velocities', getattr(pdb, 'velocities', None))
 
-        if not forcefield:
+        if strict and not forcefield:
             from .md import FORCEFIELDS as forcefield
             logger.info('! Forcefields for PDB not specified. Using default: %s',
                         ', '.join(forcefield))
@@ -256,7 +257,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         return cls.from_pdb(loader=PDBxFile, *args, **kwargs)
 
     @classmethod
-    def from_amber(cls, path, positions=None, **kwargs):
+    def from_amber(cls, path, positions=None, strict=True, **kwargs):
         """
         Loads Amber Parm7 parameters and topology file
 
@@ -272,7 +273,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         prmtop : SystemHandler
             SystemHandler with topology
         """
-        if positions is None:
+        if strict and positions is None:
             raise ValueError('Amber TOP/PRMTOP files require initial positions.')
         prmtop = AmberPrmtopFile(path)
         box = kwargs.pop('box', prmtop.topology.getPeriodicBoxVectors())
@@ -280,7 +281,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                    path=path, **kwargs)
 
     @classmethod
-    def from_charmm(cls, path, positions=None, forcefield=None, **kwargs):
+    def from_charmm(cls, path, positions=None, forcefield=None, strict=True, **kwargs):
         """
         Loads PSF Charmm structure from `path`. Requires `charmm_parameters`.
 
@@ -298,9 +299,9 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             the `master` attribute.
         """
         psf = CharmmPsfFile(path)
-        if forcefield is None:
+        if strict and forcefield is None:
             raise ValueError('PSF files require key `forcefield`.')
-        if positions is None:
+        if strict and positions is None:
             raise ValueError('PSF files require key `positions`.')
         psf.parmset = CharmmParameterSet(*forcefield)
         psf.loadParameters(psf.parmset)
@@ -323,7 +324,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                    **kwargs)
 
     @classmethod
-    def from_gromacs(cls, path, positions=None, forcefield=None, **kwargs):
+    def from_gromacs(cls, path, positions=None, forcefield=None, strict=True, **kwargs):
         """
         Loads a topology from a Gromacs TOP file located at `path`.
 
@@ -338,7 +339,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         forcefield : str, optional
             Root directory for parameter files
         """
-        if positions is None:
+        if strict and positions is None:
             raise ValueError('Gromacs TOP files require initial positions.')
         box = kwargs.pop('box', None)
         top = GromacsTopFile(path, includeDir=forcefield, periodicBoxVectors=box)
