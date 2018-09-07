@@ -82,7 +82,8 @@ def inspect_topology(topology, subset=None):
     import mdtraj
     from ommprotocol.io import SystemHandler
     import numpy as np
-    top = mdtraj.Topology.from_openmm(SystemHandler.load(topology).topology)
+    ommtop = SystemHandler.load(topology, strict=False).topology
+    top = mdtraj.Topology.from_openmm(ommtop)
     print('Topology', topology)
     print('***')
     print('Contents:')
@@ -150,8 +151,9 @@ def main():
     # 'top' subcommand
     p_top = sp.add_parser('top', help='Inspect topologies and subsets')
     p_top.add_argument('topology', type=extant_file)
-    p_top.add_argument('-s', '--subset', help='DSL query to select atoms in Topology',
-                        type=str, default=None)
+    p_top.add_argument('-s', '--subset', type=str, default=None,
+        help='DSL query to select atoms in Topology. Uses MDTraj parser '
+             '(http://mdtraj.org/latest/atom_selection.html).')
     p_top.set_defaults(func=inspect_topology)
 
     # Autocall each requested method
