@@ -15,6 +15,8 @@ OMMProtocol
     :target: http://ommprotocol.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://img.shields.io/badge/doi-10.26434%2Fchemrxiv.7059263-blue.svg
+    :target: https://chemrxiv.org/articles/OMMProtocol_A_Command_Line_Application_to_Launch_Molecular_Dynamics_Simulations_with_OpenMM/7059263
 
 A command line application to launch molecular dynamics simulations with OpenMM
 
@@ -63,15 +65,19 @@ Documentation is always available at `ReadTheDocs <http://ommprotocol.readthedoc
 Citation
 --------
 
-OMMProtocol is scientific software, funded by public research grants (Spanish MINECO's project ``CTQ2014-54071-P``, Generalitat de Catalunya's project ``2014SGR989`` and research grant ``2015FI_B00768``, COST Action ``CM1306``). If you make use of Ommprotocol in scientific publications, please cite it. It will help measure the impact of our research and future funding! A manuscript is in progress. In the meantime, please cite this repository URL.
+OMMProtocol is scientific software, funded by public research grants (Spanish MINECO's project ``CTQ2014-54071-P``, Generalitat de Catalunya's project ``2014SGR989`` and research grant ``2015FI_B00768``, COST Action ``CM1306``). If you make use of Ommprotocol in scientific publications, please cite it. It will help measure the impact of our research and future funding! A manuscript is in progress and available as a pre-print in ChemRxiv.
 
 .. code-block:: latex
 
-    @misc{ommprotocol,
-    author       = {Jaime Rodríguez-Guerra Pedregal and
-                    Lur Alonso-Cotchico and
-                    Lorea Velasco and
-                    Jean-Didier Maréchal},
-    title        = {OMMProtocol: A command line application to launch molecular dynamics simulations with OpenMM},
-    url          = {https://github.com/insilichem/ommprotocol}
+    @article{ommprotocol,
+    author    = {Rodríguez-Guerra Pedregal, Jaime and
+                 Alonso-Cotchico, Lur and
+                 Velasco-Carneros, Lorea and
+                 Maréchal, Jean-Didier}
+    title     = {OMMProtocol: A Command Line Application to Launch Molecular Dynamics Simulations with OpenMM},
+    url       = {https://chemrxiv.org/articles/OMMProtocol_A_Command_Line_Application_to_Launch_Molecular_Dynamics_Simulations_with_OpenMM/7059263/1},
+    DOI       = {10.26434/chemrxiv.7059263.v1}
+    publisher = {ChemRxiv},
+    year      = {2018},
+    month     = {Sep}
     }

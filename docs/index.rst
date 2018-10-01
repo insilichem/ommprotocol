@@ -13,6 +13,9 @@ Introducing OMMProtocol
 .. image:: https://anaconda.org/insilichem/ommprotocol/badges/downloads.svg
     :target: https://anaconda.org/InsiliChem/ommprotocol
 
+.. image:: https://img.shields.io/badge/doi-10.26434%2Fchemrxiv.7059263-blue.svg
+    :target: https://chemrxiv.org/articles/OMMProtocol_A_Command_Line_Application_to_Launch_Molecular_Dynamics_Simulations_with_OpenMM/7059263
+
 A command line application to launch molecular dynamics simulations with OpenMM
 
 
