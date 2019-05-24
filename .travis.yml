@@ -4,6 +4,8 @@ env:
   - MYCONDAPY=2.7
   - MYCONDAPY=3.5
   - MYCONDAPY=3.6
+  - MYCONDAPY=3.7
+
 
 ####
 # EVERYTHING BELOW THIS LINE WILL BE COPIED INTO OTHER YMLs
@@ -76,7 +78,8 @@ before_install:
 
 
 install:
-- source $HOME/miniconda/bin/activate
+- source $HOME/miniconda/etc/profile.d/conda.sh
+- conda activate
 - hash -r
 
 # Configure conda and get a few essentials
