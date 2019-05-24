@@ -108,6 +108,8 @@ class MultiFormatLoader(object):
 
     @classmethod
     def load(cls, path, *args, **kwargs):
+        if path is None:
+            raise ValueError("`path` cannot be None")
         name, ext = os.path.splitext(path)
         try:
             return cls._loaders(ext.lstrip('.'))(path, *args, **kwargs)
@@ -922,32 +924,37 @@ def prepare_handler(cfg):
     forcefield = cfg.pop('forcefield', None)
     topology_args = sanitize_args_for_file(cfg.pop('topology'), _path)
 
-    if 'checkpoint' in cfg:
+    if cfg.get('checkpoint'):
         restart_args = sanitize_args_for_file(cfg.pop('checkpoint'), _path)
         restart = Restart.load(*restart_args)
         positions = restart.positions
         velocities = restart.velocities
         box = restart.box
 
-    if 'positions' in cfg:
+    if cfg.get('positions'):
         positions_args = sanitize_args_for_file(cfg.pop('positions'), _path)
         positions = Positions.load(*positions_args)
         box = BoxVectors.load(*positions_args)
 
-    if 'velocities' in cfg:
-        velocities_args = sanitize_args_for_file(cfg.pop('velocities'), _path)
-        velocities = Velocities.load(*velocities_args)
-
-    if 'box' in cfg:
+    if cfg.get('box'):
         box_args = sanitize_args_for_file(cfg.pop('box'), _path)
         box = BoxVectors.load(*box_args)
+
+    if 'velocities' in cfg:
+        # velocities can be set to None to override those potentially
+        # provided in the checkpoint, forcing a random assignation
+        if cfg['velocities'] is None:
+            velocities = cfg.pop('velocities')
+        else:
+            velocities_args = sanitize_args_for_file(cfg.pop('velocities'), _path)
+            velocities = Velocities.load(*velocities_args)
 
     options = {}
     for key in 'positions velocities box forcefield'.split():
         value = locals()[key]
         if value is not None:
             options[key] = value
-
+    print(options)
     return SystemHandler.load(*topology_args, **options)
 
 
