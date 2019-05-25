@@ -4,7 +4,7 @@ env:
   - MYCONDAPY=2.7
   - MYCONDAPY=3.5
   - MYCONDAPY=3.6
-  - MYCONDAPY=3.7
+  # - MYCONDAPY=3.7
 
 
 ####
