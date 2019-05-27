@@ -1,15 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
+import io
 import os
 import versioneer
 
 VERSION = versioneer.get_version()
 
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+def read(*filenames, **kwargs):
+    encoding = kwargs.get('encoding', 'utf-8')
+    sep = kwargs.get('sep', '\n')
+    buf = []
+    for filename in filenames:
+        with io.open(os.path.join(os.path.dirname(__file__), filename), encoding=encoding) as f:
+            buf.append(f.read())
+    return sep.join(buf)
+
+long_description = read('README.rst')
 
 setup(
     name='ommprotocol',
@@ -21,8 +30,8 @@ setup(
     author="Jaime Rodríguez-Guerra",
     author_email='jaime.rogue@gmail.com',
     description='Easy to deploy MD protocols for OpenMM',
-    long_description=read('README.rst'),
-    packages=['ommprotocol'],
+    long_description=long_description,
+    packages=find_packages(),
     package_data={'': ['../examples/*.yaml']},
     platforms='any',
     classifiers=[

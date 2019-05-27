@@ -73,7 +73,7 @@ OMMProtocol is scientific software, funded by public research grants (Spanish MI
     author    = {Rodríguez-Guerra Pedregal, Jaime and
                  Alonso-Cotchico, Lur and
                  Velasco-Carneros, Lorea and
-                 Maréchal, Jean-Didier}
+                 Maréchal, Jean-Didier}
     title     = {OMMProtocol: A Command Line Application to Launch Molecular Dynamics Simulations with OpenMM},
     url       = {https://chemrxiv.org/articles/OMMProtocol_A_Command_Line_Application_to_Launch_Molecular_Dynamics_Simulations_with_OpenMM/7059263/1},
     DOI       = {10.26434/chemrxiv.7059263.v1}

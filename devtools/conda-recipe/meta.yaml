@@ -8,8 +8,7 @@ about:
   summary: Easy to deploy MD protocols for OpenMM
 
 source:
-  git_url: https://github.com/insilichem/ommprotocol.git
-  git_tag: {{ environ.get('GIT_DESCRIBE_TAG', '') }}
+  path: ../../
 
 requirements:
   build:
