@@ -530,8 +530,8 @@ class Stage(object):
         positions = self.positions if self.positions is not None else self.handler.positions
         if indices is None:
             indices = range(self.handler.topology.getNumAtoms())
-        for i, index in enumerate(indices):
-            force.addParticle(i, positions[index].value_in_unit(u.nanometers))
+        for index in indices:
+            force.addParticle(int(index), positions[index].value_in_unit(nanometers))
         return force
 
     def distance_restraint_force(self, atoms, distances, strengths):
