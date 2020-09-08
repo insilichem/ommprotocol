@@ -10,9 +10,20 @@ about:
 source:
   path: ../../
 
+build:
+  number: 0
+  script: {{ PYTHON }} -m pip install . --no-deps -vv
+  noarch: python
+  entry_points:
+    - ommprotocol = ommprotocol:run_protocol
+    - ommanalyze = ommprotocol.analyze:main
+    - state2pdb = ommprotocol:state_to_pdb
+    - exportframe = ommprotocol:export_frame
+
 requirements:
-  build:
+  host:
     - python
+    - pip
     - setuptools
 
   run:
