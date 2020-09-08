@@ -283,7 +283,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
                    path=path, **kwargs)
 
     @classmethod
-    def from_charmm(cls, path, positions=None, forcefield=None, strict=True, **kwargs):
+    def from_charmm(cls, path, positions=None, forcefield=None, box=None, strict=True, **kwargs):
         """
         Loads PSF Charmm structure from `path`. Requires `charmm_parameters`.
 
@@ -300,15 +300,15 @@ class SystemHandler(MultiFormatLoader, InputContainer):
             SystemHandler with topology. Charmm parameters are embedded in
             the `master` attribute.
         """
-        psf = CharmmPsfFile(path)
+        psf = CharmmPsfFile(path, periodicBoxVectors=box)
         if strict and forcefield is None:
             raise ValueError('PSF files require key `forcefield`.')
         if strict and positions is None:
             raise ValueError('PSF files require key `positions`.')
         psf.parmset = CharmmParameterSet(*forcefield)
         psf.loadParameters(psf.parmset)
-        return cls(master=psf, topology=psf.topology, positions=positions, path=path,
-                   **kwargs)
+        return cls(master=psf, topology=psf.topology, positions=positions, box=box,
+                   path=path, **kwargs)
 
     @classmethod
     def from_desmond(cls, path, **kwargs):
@@ -573,7 +573,7 @@ class BoxVectors(MultiFormatLoader):
             with open(path) as f:
                 lines = f.readlines()
             NamedXsc = namedtuple('NamedXsc', lines[1].split()[1:])
-            return NamedXsc(*map(float, lines[2].split()))
+            return NamedXsc(*[float(x) for x in lines[2].split()])
 
         xsc = parse(path)
         return u.Quantity([[xsc.a_x, xsc.a_y, xsc.a_z],
@@ -600,7 +600,7 @@ class BoxVectors(MultiFormatLoader):
         vectors : simtk.unit.Quantity([3, 3], unit=nanometers
         """
         with open(path) as f:
-            fields = map(float, next(f).split(','))
+            fields = [float(x) for x in next(f).split(',')]
         if len(fields) == 3:
             return u.Quantity([[fields[0], 0, 0],
                                [0, fields[1], 0],
@@ -954,7 +954,7 @@ def prepare_handler(cfg):
         value = locals()[key]
         if value is not None:
             options[key] = value
-    print(options)
+    logger.debug(options)
     return SystemHandler.load(*topology_args, **options)
 
 
