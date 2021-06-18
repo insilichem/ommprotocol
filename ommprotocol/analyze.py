@@ -24,7 +24,7 @@ def plot_log(paths):
     import pandas as pd
     multi_csv = (pd.read_csv(path, sep="\t", index_col=1) for path in paths)
     df = pd.concat(multi_csv, ignore_index=True)
-    df.ix[:, 1:5].plot(subplots=True, layout=(2,2))
+    df.iloc[:, 1:5].plot(subplots=True, layout=(2,2))
     plt.show()
 
 
