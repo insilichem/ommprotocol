@@ -34,14 +34,14 @@ try:
 except ImportError:
     from ruamel import yaml
 import jinja2
-from simtk import unit as u
-from simtk.openmm.app import (PDBFile, PDBxFile, ForceField,
-                              PDBReporter, PDBxReporter,
-                              AmberPrmtopFile, AmberInpcrdFile,
-                              CharmmPsfFile, CharmmCrdFile, CharmmParameterSet,
-                              GromacsTopFile, GromacsGroFile,
-                              DesmondDMSFile, CheckpointReporter)
-from simtk.openmm import XmlSerializer, app as openmm_app
+from openmm import unit as u
+from openmm.app import (PDBFile, PDBxFile, ForceField,
+                        PDBReporter, PDBxReporter,
+                        AmberPrmtopFile, AmberInpcrdFile,
+                        CharmmPsfFile, CharmmCrdFile, CharmmParameterSet,
+                        GromacsTopFile, GromacsGroFile,
+                        DesmondDMSFile, CheckpointReporter)
+from openmm import XmlSerializer, app as openmm_app
 import mdtraj
 from mdtraj.reporters import DCDReporter, HDF5Reporter
 import parmed
@@ -267,7 +267,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         ----------
         path : str
             Path to *.prmtop or *.top file
-        positions : simtk.unit.Quantity
+        positions : openmm.unit.Quantity
             Atomic positions
 
         Returns
@@ -336,7 +336,7 @@ class SystemHandler(MultiFormatLoader, InputContainer):
         ---------
         path : str
             Path to a Gromacs TOP file
-        positions : simtk.unit.Quantity
+        positions : openmm.unit.Quantity
             Atomic positions
         forcefield : str, optional
             Root directory for parameter files
@@ -455,7 +455,7 @@ class Positions(MultiFormatLoader):
 
     Returns
     -------
-    positions : simtk.unit.Quantity([atoms,3])
+    positions : openmm.unit.Quantity([atoms,3])
     """
 
     @classmethod
@@ -510,7 +510,7 @@ class Velocities(MultiFormatLoader):
 
     Returns
     -------
-    velocities : simtk.unit.Quantity([atoms,3])
+    velocities : openmm.unit.Quantity([atoms,3])
     """
 
     @classmethod
@@ -540,7 +540,7 @@ class BoxVectors(MultiFormatLoader):
 
     Returns
     -------
-    velocities : simtk.unit.Quantity([atoms,3])
+    velocities : openmm.unit.Quantity([atoms,3])
     """
 
     @classmethod
@@ -597,7 +597,7 @@ class BoxVectors(MultiFormatLoader):
 
         Returns
         -------
-        vectors : simtk.unit.Quantity([3, 3], unit=nanometers
+        vectors : openmm.unit.Quantity([3, 3], unit=nanometers
         """
         with open(path) as f:
             fields = [float(x) for x in next(f).split(',')]
@@ -647,9 +647,9 @@ class Restart(MultiFormatLoader, InputContainer):
 
     Returns
     -------
-    positions : simtk.unit.Quantity([atoms,3])
-    velocities : simtk.unit.Quantity([atoms,3])
-    vectors : simtk.unit.Quantity([1,3])
+    positions : openmm.unit.Quantity([atoms,3])
+    velocities : openmm.unit.Quantity([atoms,3])
+    vectors : openmm.unit.Quantity([1,3])
     """
     @classmethod
     def _loaders(cls, ext):
