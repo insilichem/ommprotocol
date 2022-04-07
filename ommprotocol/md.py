@@ -23,9 +23,9 @@ from contextlib import contextmanager
 import logging
 # 3rd party
 import numpy as np
-from simtk import unit as u
-from simtk import openmm as mm
-from simtk.openmm import app
+from openmm import unit as u
+from openmm as mm
+from openmm import app
 from mdtraj import Topology as MDTrajTopology
 # Own
 from .io import REPORTERS, ProgressBarReporter, SerializedReporter, prepare_system_options
@@ -104,9 +104,9 @@ class Stage(object):
 
     Parameters
     ----------
-    handler : simtk.openmm.Topology
+    handler : openmm.Topology
         The topology input file (PRMTOP, PDB)
-    positions : simtk.Quantity, optional
+    positions : openmm.Quantity, optional
         The starting coordinates of this stage. Only needed if
         handler is a PRMTOP file.
     steps : int, optional
@@ -115,10 +115,10 @@ class Stage(object):
         Integration timestep, in fs. Defaults to 1.0.
     forcefields : list of str or file-like, optional
         Forcefields to apply in PDB inputs.
-    velocities : simtk.unit.Quantity, optional
+    velocities : openmm.unit.Quantity, optional
         The initial velocities of this stage. If None, they will be set
         to the requested temperature
-    box_vectors : simtk.unit.Quantity, optional
+    box_vectors : openmm.unit.Quantity, optional
         Replacement periodic box vectors, instead of handler's.
     barostat : bool, optional
         True for NPT @ 1 atmosphere. False for NVT
@@ -180,7 +180,7 @@ class Stage(object):
         kJ/mol. Defaults to 5.0.
     pressure : float, optional
         Barostat pressure, in bar. Defaults to 1.01325.
-    integrator : simtk.openmm.Integrator, optional
+    integrator : openmm.Integrator, optional
         Which integrator to use. Defaults to LangevinIntegrator.
     friction : float, optional
         Friction coefficient for LangevinIntegrator, in 1/ps. Defaults to 1.0.
@@ -515,7 +515,7 @@ class Stage(object):
 
         Returns
         -------
-        force : simtk.openmm.CustomExternalForce
+        force : openmm.CustomExternalForce
             A custom force to restrain the selected atoms
         """
         if self.system.usesPeriodicBoundaryConditions():
